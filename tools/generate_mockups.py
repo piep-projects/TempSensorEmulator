@@ -122,11 +122,12 @@ def wifi_bars(draw, x, y, strength=3, color=WHITE):
 def make_splash():
     img, draw = new_screen()
 
-    # Logo laden, auf schwarzen Hintergrund und in Display-Breite skalieren
+    # Logo laden: Alpha-Kanal als Maske → weißes Logo auf Schwarz
     logo = Image.open(LOGO_SRC).convert("RGBA")
-    bg   = Image.new("RGBA", logo.size, (0, 0, 0, 255))
-    bg.paste(logo, mask=logo.split()[3])
-    logo = bg.convert("RGB")
+    white = Image.new("RGB", logo.size, (255, 255, 255))
+    bg    = Image.new("RGB", logo.size, (0, 0, 0))
+    bg.paste(white, mask=logo.split()[3])
+    logo  = bg
 
     # Proportional auf max. 70% der Display-Fläche skalieren
     max_w, max_h = int(W * 0.70), int(H * 0.75)

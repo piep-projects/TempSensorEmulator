@@ -1,6 +1,8 @@
 # Feature-Spezifikation — Wolf CHA-07 Außenfühler-Emulator
 
-Version: 1.0  
+> **Hinweis:** Dieses Dokument ist die Planungsgrundlage. Die verbindliche Spezifikation steht in [FDS.md](FDS.md).
+
+Version: 1.1  
 Hardware: LilyGo T-Display-S3 · MCP4018T-503 (50 kΩ) · LiPo 700 mAh
 
 ---
@@ -94,13 +96,15 @@ Spannungs-zu-Prozent-Kurve (LiPo typisch):
 
 ## 6. WiFi
 
+> **Entschieden:** WiFi-Konfiguration über **WiFiManager Captive Portal** (tzapu/WiFiManager).  
+> Browser öffnet sich automatisch beim Verbinden mit dem AP — wie Hotel-WLAN.
+
 ### Verbindungsaufbau
 1. Gespeicherte Zugangsdaten (NVS) vorhanden → verbinden, max. 10 s
-2. Kein Netz konfiguriert oder Verbindung fehlgeschlagen → **Access-Point-Modus**
+2. Kein Netz konfiguriert oder Verbindung fehlgeschlagen → **WiFiManager Captive Portal**
    - SSID: `CHA-Emulator`
    - Passwort: `wolf1234`
-   - IP: `192.168.4.1`
-   - Statuszeile zeigt `AP 192.168.4.1`
+   - Browser öffnet sich automatisch → Netzauswahl + Passwort → Speichern → Neustart
 
 ### Web-Interface (Port 80)
 
@@ -145,15 +149,20 @@ Aufrufbar über IP-Adresse im Browser (Handy oder PC).
 
 ```
 src/
-  main.cpp          # Setup, Loop, Deep-Sleep-Logik
-  display.h/.cpp    # Splash, Hauptscreen, Batterie-Icon
+  main.cpp          # Setup, Loop, Zustands-Automat, Deep-Sleep
+  display.h/.cpp    # Splash, Main, WiFi-Setup, Shutdown + Icons
   ntc.h             # NTC-Kennlinie, ohmToStep()
   mcp4018.h/.cpp    # I²C-Treiber MCP4018
   battery.h/.cpp    # ADC-Messung, Ladestand, Laden-Erkennung
-  wifi_mgr.h/.cpp   # WiFi-Connect, AP-Fallback, Web-Server, OTA
+  wifi_mgr.h/.cpp   # WiFiManager, Web-Server, OTA
   prefs.h/.cpp      # NVS: Temperatur + WiFi-Credentials speichern
 data/
-  logo.png          # piep design Logo (für LittleFS)
+  logo.png          # piep design Logo weiß (für LittleFS)
+mockups/
+  screen_splash.png
+  screen_main.png
+  screen_wifi_setup.png
+  screen_shutdown.png
 ```
 
 ---
@@ -170,6 +179,9 @@ Definiert als `#define FW_VERSION "v1.0.0"` in `main.cpp`.
 | Punkt | Status |
 |---|---|
 | Wolf NTC B-Wert verifizieren | offen — Messung ausstehend |
-| WiFi-Credentials: Ersteinrichtung über AP oder hardcodiert? | → AP-Modus (siehe §6) |
+| WiFi-Ersteinrichtung | ✅ WiFiManager Captive Portal |
+| Display-Screens | ✅ 4 Screens: Splash, Main, WiFi-Setup, Shutdown |
+| Logo auf Display | ✅ weiß auf schwarz; klein in Statusleiste (Main) |
+| Temperaturanzeige | ✅ große Mono-Schrift, °C in Cyan |
 | Display-Ausrichtung (USB oben/unten) | offen |
 | Gehäuse / Halterung | nicht spezifiziert |

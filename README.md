@@ -1,18 +1,37 @@
 # Wolf CHA-07 Außenfühler-Emulator
 
-Simuliert den NTC-Außentemperaturfühler einer Wolf CHA-07/10 Monoblock-Wärmepumpe mittels digitalem Potentiometer. Ermöglicht das Testen der Heizkurve und des Reglerverhalten ohne reale Außentemperatur.
+Simuliert den NTC-Außentemperaturfühler einer Wolf CHA-07/10/16/20 Monoblock-Wärmepumpe mittels digitalem Potentiometer. Ermöglicht Funktions- und Heizkurvtests unabhängig von der realen Außentemperatur.
+
+→ Vollständige Dokumentation: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [FDS.md](FDS.md)
+
+---
 
 ## Hardware
 
 | Komponente | Modell |
 |---|---|
 | Mikrocontroller | LilyGo T-Display-S3 (ESP32-S3, 1,9" Display) |
-| Digitalpotentiometer | Soldered DIGIPOT 50 kΩ (MCP4018T-503) |
-| Anschluss | I²C über QWIIC-Buchse |
+| Digitalpotentiometer | Soldered DIGIPOT **50 kΩ** (MCP4018T-503) |
+| Akku | LiPo 3,7 V / 700 mAh |
+| Verbindung | I²C über QWIIC-Buchse |
+
+## Verdrahtung
+
+```
+T-Display-S3          MCP4018 (DIGIPOT 50K)      Wolf CHA-07
+─────────────         ─────────────────────      ─────────────
+3,3 V      ────────── VCC
+GND        ────────── GND
+GPIO 18    ────────── SDA  (QWIIC)
+GPIO 17    ────────── SCL  (QWIIC)
+                       PW ─────────────────────── Fühler Klemme 1
+                       PB ─────────────────────── Fühler Klemme 2
+                       PA  offen lassen
+```
 
 ## Sensor-Kennlinie
 
-Der Wolf-Außenfühler (Art.-Nr. 2748916) ist ein **NTC 5 kΩ** bei 25 °C.
+Wolf-Außenfühler Art.-Nr. 2748916 · NTC 5 kΩ bei 25 °C · B = 3977 K *(Schätzwert)*
 
 | Temperatur | Widerstand | MCP4018-Schritt |
 |---:|---:|---:|
@@ -22,90 +41,76 @@ Der Wolf-Außenfühler (Art.-Nr. 2748916) ist ein **NTC 5 kΩ** bei 25 °C.
 | 0 °C | 16 950 Ω | 43 / 127 |
 | +5 °C | 13 047 Ω | 33 / 127 |
 | +10 °C | 10 136 Ω | 26 / 127 |
-| +15 °C | 7 943 Ω | 20 / 127 |
 | +20 °C | 6 277 Ω | 16 / 127 |
-| +25 °C | 5 000 Ω | 13 / 127 |
 | +30 °C | 4 013 Ω | 10 / 127 |
-
-> **Hinweis:** Der B-Wert (3977 K) ist ein Schätzwert — Wolf veröffentlicht keine Kennlinie.  
-> Verifizierung: Sensor bei bekannter Temperatur messen, `NTC_B` in `src/main.cpp` ggf. anpassen.
-
-## Verdrahtung
-
-```
-T-Display-S3          MCP4018 (DIGIPOT 50K)
-─────────────         ─────────────────────
-3,3 V      ───────── VCC
-GND        ───────── GND
-GPIO 18    ───────── SDA   (QWIIC)
-GPIO 17    ───────── SCL   (QWIIC)
-
-                      PW ──── Heizung Klemme 1 (Fühler +)
-                      PB ──── Heizung Klemme 2 (Fühler −)
-                      PA ──── offen
-```
-
-> Die Wolf CHA-07 verwendet eine 2-Draht-NTC-Messung (kein Bezugspotential).  
-> Polarität der Klemmen spielt keine Rolle.
 
 ## Bedienung
 
-| Taste | Kurz | Gedrückt halten |
+| Taste | Kurz | Halten |
 |---|---|---|
-| **BOOT** (links, GPIO 0) | −0,5 °C | schnell runter |
-| **KEY** (rechts, GPIO 14) | +0,5 °C | schnell hoch |
+| **BOOT** (GPIO 0) | −0,5 °C | schnell runter |
+| **KEY** (GPIO 14) | +0,5 °C | schnell hoch |
+| **Beide 2 s** | → Deep Sleep | — |
 
-Simulationsbereich: **−15 °C bis +30 °C**
-
-Das Display zeigt:
-- aktuelle Simulationstemperatur (groß)
-- berechneter Widerstand in Ohm
-- MCP4018-Schrittnummer
-- I²C-Verbindungsstatus
-
-## Software
-
-**Framework:** Arduino (PlatformIO)  
-**Display-Bibliothek:** [LovyanGFX](https://github.com/lovyan03/LovyanGFX)
-
-### Bauen & Flashen
+## Flashen
 
 ```bash
-# Abhängigkeiten installieren und flashen
-pio run -t upload
+git clone https://github.com/piep-projects/TempSensorEmulator
+cd TempSensorEmulator
 
-# Seriellen Monitor öffnen (115200 Baud)
-pio device monitor
+# Logo für LittleFS aufbereiten (einmalig, benötigt Pillow)
+pip install Pillow
+python3 tools/png_to_littlefs.py
+
+pio run -t uploadfs   # LittleFS-Image
+pio run -t upload     # Firmware
+pio device monitor    # Serieller Monitor (115200 Baud)
 ```
 
-Der serielle Monitor gibt beim Start die vollständige Kennlinien-Tabelle aus — nützlich zum Abgleich mit einem Multimeter.
+## WLAN einrichten (WiFiManager Captive Portal)
 
-### Konfiguration (src/main.cpp)
+Beim ersten Start ohne gespeicherte WLAN-Daten:
 
-```cpp
-static constexpr float NTC_R25 = 5000.0f;   // Nennwiderstand bei 25 °C
-static constexpr float NTC_B   = 3977.0f;   // B-Konstante — anpassen falls nötig
-static constexpr float T_MIN   = -15.0f;    // untere Grenze
-static constexpr float T_MAX   =  30.0f;    // obere Grenze
-static constexpr float T_STEP  =   0.5f;    // Schrittweite pro Tastendruck
-```
+1. Gerät öffnet Hotspot **`CHA-Emulator`** (Passwort: `wolf1234`)
+2. Handy mit diesem Netz verbinden → Browser öffnet sich **automatisch**
+3. Heimnetz aus der Liste wählen, Passwort eingeben, speichern
+4. Gerät startet neu und verbindet sich automatisch
+
+Danach: Temperatur per Browser unter `http://<IP>` einstellen.
+
+## OTA-Update
+
+Neue Firmware einspielen unter `http://<IP>/update`
 
 ## Kompatibilität
 
-Getestet mit / ausgelegt für:
+| Wärmepumpe | ab Baujahr | Fühler-Art.-Nr. |
+|---|---|---|
+| Wolf CHA-07 | 10/2018 | 2748916 |
+| Wolf CHA-10 | 10/2018 | 2748916 |
+| Wolf CHA-16 | 05/2023 | 2748916 |
+| Wolf CHA-20 | 05/2023 | 2748916 |
 
-- Wolf CHA-07 Monoblock-Wärmepumpe (ab Baujahr 10/2018)
-- Wolf CHA-10 Monoblock-Wärmepumpe (ab Baujahr 10/2018)
-- Wolf CHA-16/20 (ab Baujahr 05/2023, gleicher Fühler Art. 2748916)
-
-## Dateien
+## Projektstruktur
 
 ```
 TempSensorEmulator/
 ├── src/
-│   └── main.cpp              # Firmware
-├── datasheets/
-│   ├── DIGIPOT-10K-MCP4018.pdf       # Modul-Datenblatt (10K-Variante)
-│   └── SOLDERED_MCP4018_DATASHEET.pdf # MCP4018-IC Datenblatt
-└── platformio.ini            # Build-Konfiguration
+│   ├── main.cpp          # Haupt-Loop, Deep-Sleep, Zustands-Automat
+│   ├── display.h/.cpp    # Alle vier Screens + Icons
+│   ├── ntc.h             # NTC-Kennlinie, Formel
+│   ├── mcp4018.h/.cpp    # I²C-Treiber MCP4018
+│   ├── battery.h/.cpp    # ADC, Ladestand, Lade-Erkennung
+│   ├── wifi_mgr.h/.cpp   # WiFiManager, Webserver, OTA
+│   └── prefs.h/.cpp      # NVS-Persistenz
+├── data/
+│   └── logo.png          # piep design Logo (LittleFS, Splash-Screen)
+├── mockups/              # Display-Mockups (PNG)
+├── datasheets/           # MCP4018-Datenblätter, Logo-Quelle
+├── tools/
+│   ├── png_to_littlefs.py    # Logo-Konvertierung
+│   └── generate_mockups.py   # Screen-Mockups erzeugen
+└── platformio.ini
 ```
+
+*piep design · wolfgang@v-online.me*

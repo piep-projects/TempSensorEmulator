@@ -10,7 +10,7 @@
 
 ## Wozu dient dieses Gerät?
 
-Der Außenfühler der Wolf CHA-07/10 Monoblock-Wärmepumpe ist ein passiver NTC-Widerstand (5 kΩ bei 25 °C). Der Regler liest dessen Widerstand und steuert darüber die Heizkurve.
+Der Außenfühler der Wolf CHA-07/10 Monoblock-Wärmepumpe ist ein passiver NTC-Widerstand (5 kΩ bei 25 °C, Art.-Nr. 2748916). Der Regler liest dessen Widerstand und steuert darüber die Heizkurve.
 
 Dieses Gerät ersetzt den echten Sensor durch ein per Hand einstellbares **digitales Potentiometer**. Damit lässt sich die Wärmepumpe im Labor oder bei der Inbetriebnahme mit beliebigen Außentemperaturen testen — unabhängig vom tatsächlichen Wetter.
 
@@ -42,8 +42,21 @@ GPIO 18    ────────── SDA  (QWIIC)
 GPIO 17    ────────── SCL  (QWIIC)
                        PW ─────────────────────── Fühler Klemme 1
                        PB ─────────────────────── Fühler Klemme 2
-                       PA  offen
+                       PA  offen lassen
 ```
+
+---
+
+## Display-Screens
+
+Das Gerät hat vier Display-Zustände (Mockups in `mockups/`):
+
+| Screen | Datei | Beschreibung |
+|---|---|---|
+| **Splash** | `screen_splash.png` | piep design Logo weiß auf schwarz, Firmware-Version |
+| **Main** | `screen_main.png` | Temperatur groß, Logo + Status oben, NTC-Info unten |
+| **WiFi-Setup** | `screen_wifi_setup.png` | Captive-Portal-Anleitung (SSID, PW, 3 Schritte) |
+| **Shutdown** | `screen_shutdown.png` | Roter Warnrahmen, Hinweis auf echten Fühler, Countdown |
 
 ---
 
@@ -51,16 +64,16 @@ GPIO 17    ────────── SCL  (QWIIC)
 
 | Feature | Details |
 |---|---|
-| Splash-Screen | piep design Logo + Firmware-Version beim Start |
-| Temperaturanzeige | −15 °C bis +30 °C, Schritte 0,5 °C |
-| Tastensteuerung | BOOT = −0,5 °C · KEY = +0,5 °C · Halten = schnell |
-| Deep Sleep | Beide Tasten 2 s → Stromsparmodus; Taste → Aufwachen |
-| Batterieanzeige | Ladestand in % + Icon; Blitz beim Laden |
-| Warnung | < 15 % blinkend; < 5 % → automatisch Sleep |
-| WiFi | Verbindet mit heimem WLAN; Fallback auf eigenen AP |
-| Web-Interface | Temperatur vom Handy/PC aus einstellen |
-| OTA-Update | Firmware drahtlos über Browser einspielen |
-| NVS-Speicher | Temperatur + WLAN-Daten bleiben nach Neustart erhalten |
+| **Splash-Screen** | piep design Logo (weiß) + Firmware-Version beim Start |
+| **Temperaturanzeige** | −15 °C bis +30 °C, große Anzeige, Schritte 0,5 °C |
+| **Tastensteuerung** | BOOT = −0,5 °C · KEY = +0,5 °C · Halten = schnell |
+| **Deep Sleep** | Beide Tasten 2 s → Stromsparmodus; Taste → Aufwachen |
+| **Batterieanzeige** | Ladestand in % + 5-stufiges Icon; Blitz beim Laden |
+| **Warnung** | < 15 % blinkend rot; < 5 % → automatisch Sleep |
+| **WiFi** | WiFiManager Captive Portal — Browser öffnet sich automatisch |
+| **Web-Interface** | Temperatur vom Handy/PC einstellen, Status, WLAN-Config |
+| **OTA-Update** | Firmware drahtlos über Browser (`/update`) einspielen |
+| **NVS-Speicher** | Temperatur + WLAN-Daten bleiben nach Neustart erhalten |
 
 ---
 
@@ -92,22 +105,31 @@ pio run -t upload
 pio device monitor
 ```
 
-### 3. WLAN einrichten
+### 3. WLAN einrichten — WiFiManager Captive Portal
 
-Beim ersten Start (kein WLAN konfiguriert) öffnet das Gerät einen Access Point:
+Beim ersten Start (kein WLAN konfiguriert) öffnet das Gerät automatisch einen Hotspot:
 
 | Parameter | Wert |
 |---|---|
 | SSID | `CHA-Emulator` |
 | Passwort | `wolf1234` |
-| Konfigurations-URL | `http://192.168.4.1` |
 
-WLAN-Daten über das Web-Interface eingeben → Gerät verbindet sich beim nächsten Start automatisch.
+**Ablauf:**
+1. Handy mit `CHA-Emulator` verbinden
+2. Browser öffnet sich **automatisch** (Captive Portal, wie Hotel-WLAN)
+3. Heimnetz aus der Liste wählen + Passwort eingeben
+4. Gerät speichert die Daten und startet neu — verbindet sich ab jetzt automatisch
+
+Das Display zeigt während der Einrichtung den WiFi-Setup-Screen mit der Schritt-für-Schritt-Anleitung.
 
 ### 4. Temperatur einstellen
 
 - **Am Gerät:** BOOT-Taste (−) oder KEY-Taste (+), halten für schnellen Lauf
 - **Im Browser:** `http://<IP-Adresse>` → Temperatur per Webseite einstellen
+
+### 5. OTA-Firmware-Update
+
+Neue Firmware einspielen unter `http://<IP-Adresse>/update`
 
 ---
 
@@ -116,26 +138,44 @@ WLAN-Daten über das Web-Interface eingeben → Gerät verbindet sich beim näch
 ```
 TempSensorEmulator/
 ├── src/
-│   ├── main.cpp          # Haupt-Loop, Deep-Sleep
-│   ├── display.h/.cpp    # Splash, Hauptscreen, Icons
-│   ├── ntc.h             # NTC-Kennlinie, Formel
-│   ├── mcp4018.h/.cpp    # I²C-Treiber MCP4018
-│   ├── battery.h/.cpp    # ADC, Ladestand, Laden
-│   ├── wifi_mgr.h/.cpp   # WiFi, AP-Fallback, Webserver, OTA
-│   └── prefs.h/.cpp      # NVS-Persistenz
+│   ├── main.cpp              # Haupt-Loop, Zustands-Automat, Deep-Sleep
+│   ├── display.h/.cpp        # Alle vier Screens + Icons
+│   ├── ntc.h                 # NTC-Kennlinie, Formel
+│   ├── mcp4018.h/.cpp        # I²C-Treiber MCP4018
+│   ├── battery.h/.cpp        # ADC, Ladestand, Lade-Erkennung
+│   ├── wifi_mgr.h/.cpp       # WiFiManager, Webserver, OTA
+│   └── prefs.h/.cpp          # NVS-Persistenz
 ├── data/
-│   └── logo.png          # piep design Logo (LittleFS)
+│   └── logo.png              # piep design Logo (LittleFS, Splash + Main)
+├── mockups/
+│   ├── screen_splash.png     # Splash-Screen Mockup
+│   ├── screen_main.png       # Haupt-Screen Mockup
+│   ├── screen_wifi_setup.png # WiFi-Setup-Screen Mockup
+│   └── screen_shutdown.png   # Shutdown-Screen Mockup
 ├── datasheets/
-│   ├── piep-design1.png
+│   ├── piep-design1.png      # Logo-Quelle (Original)
 │   ├── DIGIPOT-10K-MCP4018.pdf
 │   └── SOLDERED_MCP4018_DATASHEET.pdf
 ├── tools/
-│   └── png_to_littlefs.py
+│   ├── png_to_littlefs.py    # Logo für LittleFS aufbereiten
+│   └── generate_mockups.py   # Screen-Mockups erzeugen (benötigt Pillow)
 ├── platformio.ini
-├── PROJECT_OVERVIEW.md   # dieses Dokument
-├── FDS.md                # Functional Design Specification
-└── FEATURES.md           # Feature-Liste (Planungsphase)
+├── README.md                 # Kurzreferenz
+├── PROJECT_OVERVIEW.md       # dieses Dokument
+├── FDS.md                    # Functional Design Specification
+└── FEATURES.md               # Feature-Liste (Planungsphase)
 ```
+
+---
+
+## Bibliotheken (PlatformIO)
+
+| Bibliothek | Version | Zweck |
+|---|---|---|
+| LovyanGFX | ^1.1.16 | Display-Treiber (ST7789, 8080-Bus) |
+| WiFiManager | ^2.0.17 | WLAN-Konfiguration, Captive Portal |
+| ElegantOTA | ^3.1.0 | OTA-Firmware-Update über Browser |
+| ArduinoJson | ^7.0.0 | JSON für `/status`-Endpunkt |
 
 ---
 
@@ -154,9 +194,11 @@ TempSensorEmulator/
 
 | Dokument | Inhalt |
 |---|---|
+| [README.md](README.md) | Kurzreferenz: Verdrahtung, Flashen, Bedienung |
 | [FDS.md](FDS.md) | Functional Design Specification — vollständige technische Spezifikation |
 | [FEATURES.md](FEATURES.md) | Feature-Liste der Planungsphase |
-| [datasheets/](datasheets/) | Datenblätter MCP4018 |
+| [mockups/](mockups/) | Display-Screen-Mockups (PNG, 960×510) |
+| [datasheets/](datasheets/) | MCP4018-Datenblätter, Logo-Quelldatei |
 
 ---
 
@@ -164,8 +206,8 @@ TempSensorEmulator/
 
 | Version | Datum | Änderungen |
 |---|---|---|
-| 1.0.0 | 2026-05-06 | Initiale Implementierung (Grundfunktion, kein WiFi) |
-| 1.1.0 | — | Batterie, Deep Sleep, WiFi, OTA, Web-Interface |
+| 1.0.0 | 2026-05-06 | Initiale Implementierung — Grundfunktion (NTC-Emulation, Display, Tasten) |
+| 1.1.0 | — | Batterie, Deep Sleep, WiFiManager Captive Portal, Web-Interface, OTA |
 
 ---
 

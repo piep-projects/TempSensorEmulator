@@ -69,8 +69,8 @@ def load_font_mono(size):
 F_TINY   = load_font_regular(s(5.5))
 F_SMALL  = load_font_regular(s(6.5))
 F_MED    = load_font(s(8))
-F_LARGE  = load_font_mono(s(30))
-F_UNIT   = load_font(s(14))
+F_LARGE  = load_font_mono(s(42))   # Temperatur: deutlich größer
+F_UNIT   = load_font(s(18))
 F_TITLE  = load_font(s(7))
 
 def centered_text(draw, y, text, font, color, width=W):
@@ -156,8 +156,15 @@ def make_main():
     draw.line([(0, s(148)), (W, s(148))], fill=(40, 40, 40), width=1)
     draw.line([(0, s(160)), (W, s(160))], fill=(30, 30, 30), width=1)
 
-    # ── Statusleiste (y=4..18) ────────────────────────────────
-    draw.text((s(4), s(4)), "Wolf CHA-07", font=F_TITLE, fill=MIDGREY)
+    # ── Statusleiste (y=4..18): kleines piep design Logo links ──
+    logo = Image.open(LOGO_SRC).convert("RGBA")
+    white = Image.new("RGB", logo.size, (255, 255, 255))
+    bg_l  = Image.new("RGB", logo.size, (18, 18, 18))
+    bg_l.paste(white, mask=logo.split()[3])
+    logo_h = s(14)
+    logo_w = int(logo.width * logo_h / logo.height)
+    logo_small = bg_l.resize((logo_w, logo_h), Image.LANCZOS)
+    img.paste(logo_small, (s(4), s(3)))
 
     # I2C OK
     draw.text((s(115), s(4)), "I²C OK", font=F_TINY, fill=GREEN)
@@ -170,29 +177,33 @@ def make_main():
     battery_icon(draw, s(280), s(6), pct=78, charging=False)
     draw.text((s(299), s(4)), "78%", font=F_TINY, fill=WHITE)
 
-    # ── Temperatur (y=30..120) ────────────────────────────────
+    # ── Temperatur: zentriert, groß ───────────────────────────
     temp_str = "-5.5"
     bbox = draw.textbbox((0, 0), temp_str, font=F_LARGE)
+    th = bbox[3] - bbox[1]
     tw = bbox[2] - bbox[0]
-    tx = (W - tw) // 2 - s(18)
-    ty = s(34)
+    # Vertikal zentriert zwischen Statusleiste (y=20) und Info-Zeile (y=140)
+    ty = s(20) + (s(120) - th) // 2
+    tx = (W - tw) // 2 - s(20)
     draw.text((tx, ty), temp_str, font=F_LARGE, fill=WHITE)
 
     # Einheit °C
-    unit_x = tx + tw + s(4)
-    draw.text((unit_x, ty + s(4)), "°C", font=F_UNIT, fill=CYAN)
+    unit_x = tx + tw + s(3)
+    unit_bbox = draw.textbbox((0, 0), "°C", font=F_UNIT)
+    unit_h = unit_bbox[3] - unit_bbox[1]
+    draw.text((unit_x, ty + th - unit_h - s(2)), "°C", font=F_UNIT, fill=CYAN)
 
-    # ── Info-Zeile (y=134..148) ───────────────────────────────
-    draw.text((s(4), s(135)), "R = 22 237 Ω", font=F_SMALL, fill=YELLOW)
+    # ── Info-Zeile ────────────────────────────────────────────
+    draw.text((s(4), s(140)), "R = 22 237 Ω", font=F_SMALL, fill=YELLOW)
     step_str = "Schritt  57 / 127"
     bbox = draw.textbbox((0, 0), step_str, font=F_SMALL)
-    draw.text((W - bbox[2] - s(4), s(135)), step_str, font=F_SMALL, fill=YELLOW)
+    draw.text((W - bbox[2] - s(4), s(140)), step_str, font=F_SMALL, fill=YELLOW)
 
-    # ── Tasten-Hints (y=162..170) ─────────────────────────────
-    draw.text((s(4),  s(162)), "BOOT  ▼  (−)", font=F_TINY, fill=DARKGREY)
+    # ── Tasten-Hints ──────────────────────────────────────────
+    draw.text((s(4),  s(158)), "BOOT  ▼  (−)", font=F_TINY, fill=DARKGREY)
     hint2 = "(+)  ▲  KEY"
     bbox = draw.textbbox((0, 0), hint2, font=F_TINY)
-    draw.text((W - bbox[2] - s(4), s(162)), hint2, font=F_TINY, fill=DARKGREY)
+    draw.text((W - bbox[2] - s(4), s(158)), hint2, font=F_TINY, fill=DARKGREY)
 
     return img
 
@@ -228,11 +239,51 @@ def make_shutdown():
 
     return img
 
+# ══════════════════════════════════════════════════════════════
+# SCREEN 4: WIFI SETUP
+# ══════════════════════════════════════════════════════════════
+def make_wifi_setup():
+    img, draw = new_screen()
+
+    # Blauer Rahmen für WiFi-Thema
+    draw.rectangle([s(4), s(4), W-s(4), H-s(4)], outline=(30, 80, 180), width=s(2))
+
+    # Titel
+    centered_text(draw, s(10), "WiFi-Konfiguration", F_MED, (80, 160, 255))
+
+    # Trennlinie
+    draw.line([(s(20), s(32)), (W-s(20), s(32))], fill=(30, 60, 120), width=1)
+
+    # AP-Info (Icon + SSID + Passwort)
+    wifi_bars(draw, s(20), s(42), strength=3, color=(80, 160, 255))
+    draw.text((s(38), s(40)), "AP:  CHA-Emulator", font=F_SMALL, fill=WHITE)
+
+    bbox = draw.textbbox((0,0), "PW:  wolf1234", font=F_SMALL)
+    draw.text((s(38), s(56)), "PW:  wolf1234", font=F_SMALL, fill=MIDGREY)
+
+    # Trennlinie
+    draw.line([(s(20), s(74)), (W-s(20), s(74))], fill=(30, 60, 120), width=1)
+
+    # Schritte
+    steps = [
+        "1.  Handy mit  \"CHA-Emulator\"  verbinden",
+        "2.  Browser oeffnet sich automatisch",
+        "3.  Heimnetz waehlen + Passwort eingeben",
+    ]
+    for i, step in enumerate(steps):
+        draw.text((s(16), s(82) + i * s(22)), step, font=F_SMALL, fill=MIDGREY)
+
+    # Warte-Animation (Punkte)
+    centered_text(draw, s(152), "Warte auf Verbindung …", F_TINY, DARKGREY)
+
+    return img
+
 # ── Erzeugen & Speichern ──────────────────────────────────────
 screens = {
-    "screen_splash.png":   make_splash(),
-    "screen_main.png":     make_main(),
-    "screen_shutdown.png": make_shutdown(),
+    "screen_splash.png":     make_splash(),
+    "screen_main.png":       make_main(),
+    "screen_shutdown.png":   make_shutdown(),
+    "screen_wifi_setup.png": make_wifi_setup(),
 }
 
 for fname, img in screens.items():

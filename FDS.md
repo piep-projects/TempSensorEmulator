@@ -258,28 +258,30 @@ Interpolation linear zwischen Stützpunkten. Messung alle 10 s, gleitender Mitte
 
 ### FR-08 — WiFi-Verbindung
 
+Implementierung über **WiFiManager** (Library: `tzapu/WiFiManager`).
+
 | ID | Anforderung |
 |---|---|
-| FR-08.1 | Beim Start prüft das Gerät, ob WLAN-Daten in NVS vorhanden sind. |
-| FR-08.2 | Sind Daten vorhanden, wird der Verbindungsaufbau im STA-Modus versucht (Timeout: 10 s). |
-| FR-08.3 | Schlägt die Verbindung fehl oder fehlen die Daten, wechselt das Gerät in den AP-Modus (SSID: `CHA-Emulator`, Passwort: `wolf1234`, IP: `192.168.4.1`). |
-| FR-08.4 | Der WiFi-Status (IP-Adresse oder `AP`) ist in der Statusleiste des Hauptscreens sichtbar. |
-| FR-08.5 | WLAN-Daten können über das Web-Interface (FR-09) neu konfiguriert werden. |
-| FR-08.6 | Im Deep Sleep wird das WiFi-Modul abgeschaltet. |
+| FR-08.1 | Beim Start versucht WiFiManager, mit den zuletzt gespeicherten Zugangsdaten zu verbinden (Timeout: 10 s). |
+| FR-08.2 | Sind keine Daten vorhanden oder schlägt die Verbindung fehl, öffnet WiFiManager automatisch einen Captive-Portal-AP. |
+| FR-08.3 | AP-Parameter: SSID `CHA-Emulator`, Passwort `wolf1234`, IP `192.168.4.1`. |
+| FR-08.4 | Das Gerät zeigt während des AP-Modus den WiFi-Setup-Screen (§9.4) mit Verbindungsanleitung. |
+| FR-08.5 | Das Handy verbindet sich mit dem AP; der Browser öffnet automatisch das Captive Portal (wie Hotel-WLAN). |
+| FR-08.6 | Der Nutzer wählt sein Heimnetz aus der Liste und gibt das Passwort ein; WiFiManager speichert die Daten und startet neu. |
+| FR-08.7 | Nach erfolgreicher Verbindung zeigt die Statusleiste die zugewiesene IP-Adresse. |
+| FR-08.8 | Im Deep Sleep wird das WiFi-Modul abgeschaltet. |
 
 ### FR-09 — Web-Interface
 
 | ID | Anforderung |
 |---|---|
-| FR-09.1 | Der interne HTTP-Server läuft auf Port 80. |
-| FR-09.2 | `GET /` liefert eine HTML-Seite mit aktueller Temperatur, Widerstand, Batterie-SoC, Firmware-Version und IP. |
+| FR-09.1 | Der interne HTTP-Server läuft auf Port 80 (zusätzlich zum WiFiManager-Portal). |
+| FR-09.2 | `GET /` liefert eine mobile HTML-Seite mit aktueller Temperatur, Widerstand, Batterie-SoC, Firmware-Version und IP. |
 | FR-09.3 | Die HTML-Seite enthält Schaltflächen `[−]` und `[+]` zum Ändern der Temperatur in 0,5-°C-Schritten. |
-| FR-09.4 | Die Seite enthält ein Formular zur Eingabe von WLAN-SSID und Passwort. |
-| FR-09.5 | `GET /set?t=<wert>` setzt die Temperatur (Bereich −15 bis +30, Auflösung 0,5 °C); antwortet mit Redirect auf `/`. |
-| FR-09.6 | `GET /status` antwortet mit JSON (siehe §10.2). |
-| FR-09.7 | `POST /wifi` nimmt SSID + Passwort entgegen, speichert in NVS und startet neu. |
-| FR-09.8 | `/update` stellt die ElegantOTA-Seite bereit. |
-| FR-09.9 | Die HTML-Seite ist mobilgerecht (Schriftgröße, Abstände für Touchbedienung). |
+| FR-09.4 | `GET /set?t=<wert>` setzt die Temperatur (Bereich −15 bis +30, Auflösung 0,5 °C); antwortet mit Redirect auf `/`. |
+| FR-09.5 | `GET /status` antwortet mit JSON (siehe §10.2). |
+| FR-09.6 | `/update` stellt die ElegantOTA-Seite für OTA-Updates bereit. |
+| FR-09.7 | Die HTML-Seite ist mobilgerecht (Schriftgröße, Abstände für Touchbedienung). |
 
 ### FR-10 — OTA-Firmware-Update
 
@@ -352,6 +354,7 @@ tools/
 ```ini
 lib_deps =
     lovyan03/LovyanGFX @ ^1.1.16
+    tzapu/WiFiManager @ ^2.0.17
     ayushsharma82/ElegantOTA @ ^3.1.0
     arduino-libraries/ArduinoJson @ ^7.0.0
 ```
@@ -386,7 +389,7 @@ LittleFS und NVS sind Teil des ESP32-Arduino-Frameworks (keine externe Abhängig
 ```
 
 Zustandsvariable `AppState` in `main.cpp`:  
-`SPLASH → MAIN → SLEEP` (und `MAIN ↔ WIFI_SETUP`)
+`SPLASH → WIFI_SETUP → MAIN → SLEEP` (WiFiManager löst WIFI_SETUP bei Bedarf aus)
 
 ---
 
@@ -444,15 +447,36 @@ Bibliothek: LovyanGFX
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│                                                                 │
-│                    Gerät wird ausgeschaltet                     │
-│                    Letzte Temp: -5.5 °C                        │
-│                    Bitte Fühler wieder anschliessen             │
-│                                                                 │
+│  ⚠  Gerät wird ausgeschaltet  ⚠                               │
+│  ──────────────────────────────────────────────────────────── │
+│  Letzte Temperatur:  −5.5 °C                                  │
+│  Wert gespeichert — wird beim nächsten Start wiederhergestellt │
+│  ──────────────────────────────────────────────────────────── │
+│  Bitte echten Fühler wieder an Heizung anschliessen!          │
+│                                          Ausschalten in  2 s… │
 └────────────────────────────────────────────────────────────────┘
 ```
 
 Anzeige für 2 Sekunden, dann Deep Sleep.
+
+### 9.4 WiFi-Setup-Screen (Captive Portal aktiv)
+
+Wird angezeigt, solange WiFiManager im AP-Modus auf Konfiguration wartet.
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│  WiFi-Konfiguration                                            │
+│  ──────────────────────────────────────────────────────────── │
+│                                                                 │
+│  ))) AP:  CHA-Emulator                                        │
+│      PW:  wolf1234                                            │
+│                                                                 │
+│  1. Handy mit "CHA-Emulator" verbinden                        │
+│  2. Browser öffnet sich automatisch                           │
+│  3. Heimnetz wählen + Passwort eingeben                       │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -581,7 +605,8 @@ Ergebnis in `ntc.h` als `NTC_B` eintragen.
 | Nr. | Punkt | Priorität | Status |
 |---|---|---|---|
 | OP-01 | Wolf NTC B-Wert messtechnisch verifizieren | Hoch | Offen |
-| OP-02 | Laden-Erkennung: GPIO-Pin des Lader-IC prüfen (falls vorhanden) | Mittel | Offen |
+| OP-02 | WiFi-Ersteinrichtung | — | **Entschieden: WiFiManager Captive Portal** |
+| OP-02b | Laden-Erkennung: GPIO-Pin des Lader-IC prüfen (falls vorhanden) | Mittel | Offen |
 | OP-03 | Display-Ausrichtung festlegen (USB-C nach oben oder unten) | Niedrig | Offen |
 | OP-04 | Gehäuse / Halterung | Niedrig | Nicht spezifiziert |
 | OP-05 | OTA-Passwortschutz (aktuell ohne Passwort) | Niedrig | Bewusst offen |

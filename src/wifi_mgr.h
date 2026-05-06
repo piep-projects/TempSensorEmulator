@@ -4,9 +4,12 @@
 // Zeiger auf g_tempC setzen (vor wifiBegin aufrufen)
 void wifiSetTempPtr(float* ptr);
 
-// Blockiert bis verbunden oder Captive Portal abgeschlossen.
-// Ruft drawWifiSetup() auf wenn AP-Modus startet.
+// Verbindet mit gespeichertem Netz (kurzer Timeout, kein Portal).
 void wifiBegin();
+
+// Startet WiFiManager Captive Portal (blockierend, ~5 min).
+// Ruft drawWifiSetup() auf. Startet Webserver falls danach verbunden.
+void wifiStartPortal();
 
 // HTTP-Server in loop() bedienen
 void wifiLoop();

@@ -3,15 +3,16 @@
 #include "display.h"
 #include "ntc.h"
 #include "battery.h"
+#include <WiFi.h>
 #include <WiFiManager.h>
 #include <WebServer.h>
 #include <ElegantOTA.h>
 #include <ArduinoJson.h>
 
-// ── Geteilter Zustand (gesetzt von main.cpp via Setter) ───────
-static float*   g_pTemp = nullptr;   // Zeiger auf g_tempC in main
-static bool     g_connected = false;
-static String   g_ip = "---";
+static float*   g_pTemp      = nullptr;
+static bool     g_connected  = false;
+static bool     g_srvStarted = false;
+static String   g_ip         = "---";
 
 static WebServer  server(WEB_PORT);
 static WiFiManager wm;
@@ -63,45 +64,30 @@ static const char HTML_PAGE[] PROGMEM = R"rawhtml(
 </html>
 )rawhtml";
 
-// ── Setter von main.cpp ───────────────────────────────────────
 void wifiSetTempPtr(float* ptr) { g_pTemp = ptr; }
 
 // ── Handler ───────────────────────────────────────────────────
 static void handleRoot() {
     if (!g_pTemp) { server.send(503, "text/plain", "not ready"); return; }
-    float t   = *g_pTemp;
-    float ohm = ntcOhm(t);
-    int   stp = ntcToStep(t);
-    int   bat = batteryPercent();
-    bool  chg = batteryCharging();
-
-    // Temp ±0,5 gerundet
+    float t      = *g_pTemp;
     float tMinus = max(t - TEMP_STEP, (float)TEMP_MIN);
     float tPlus  = min(t + TEMP_STEP, (float)TEMP_MAX);
-
     char tStr[8], tmStr[8], tpStr[8];
     snprintf(tStr,  sizeof(tStr),  "%.1f", t);
     snprintf(tmStr, sizeof(tmStr), "%.1f", tMinus);
     snprintf(tpStr, sizeof(tpStr), "%.1f", tPlus);
-
     char page[sizeof(HTML_PAGE) + 128];
     snprintf(page, sizeof(page), HTML_PAGE,
              tStr, tmStr, tpStr,
-             ohm, stp,
-             bat, chg ? "&#x26A1;" : "",
-             FW_VERSION,
-             g_ip.c_str());
-
+             ntcOhm(t), ntcToStep(t),
+             batteryPercent(), batteryCharging() ? "&#x26A1;" : "",
+             FW_VERSION, g_ip.c_str());
     server.send(200, "text/html; charset=UTF-8", page);
 }
 
 static void handleSet() {
-    if (!g_pTemp || !server.hasArg("t")) {
-        server.send(400, "text/plain", "missing t");
-        return;
-    }
+    if (!g_pTemp || !server.hasArg("t")) { server.send(400, "text/plain", "missing t"); return; }
     float t = server.arg("t").toFloat();
-    // Auf 0,5-°C-Raster runden und begrenzen
     t = roundf(t / TEMP_STEP) * TEMP_STEP;
     t = constrain(t, TEMP_MIN, TEMP_MAX);
     *g_pTemp = t;
@@ -128,51 +114,87 @@ static void handleStatus() {
 
 static void handleWifiReset() {
     server.send(200, "text/html; charset=UTF-8",
-        "<html><body style='background:#111;color:#eee;font-family:sans-serif;text-align:center;padding:40px'>"
+        "<html><body style='background:#111;color:#eee;font-family:sans-serif;"
+        "text-align:center;padding:40px'>"
         "<h2>WLAN wird zurueckgesetzt...</h2><p>Gerat startet neu.</p></body></html>");
     delay(1000);
     wm.resetSettings();
     ESP.restart();
 }
 
-// ── Öffentliche API ───────────────────────────────────────────
-void wifiBegin() {
-    wm.setConfigPortalTimeout(300);   // 5 min Timeout für Captive Portal
-    wm.setConnectTimeout(WIFI_TIMEOUT_S);
-    wm.setConnectRetries(3);
-
-    // Beim Start des AP-Modus WiFi-Setup-Screen anzeigen
-    wm.setAPCallback([](WiFiManager*) {
-        drawWifiSetup();
-        g_connected = false;
-        g_ip = "AP 192.168.4.1";
-    });
-
-    if (wm.autoConnect(WIFI_AP_SSID, WIFI_AP_PASS)) {
-        g_connected = true;
-        g_ip = WiFi.localIP().toString();
-        Serial.printf("WiFi verbunden: %s\n", g_ip.c_str());
-    } else {
-        g_connected = false;
-        g_ip = "---";
-        Serial.println("WiFi nicht verbunden — ohne Netz weiter.");
-    }
-
-    // Webserver starten (auch ohne WiFi, für AP-Modus)
-    server.on("/",           HTTP_GET,  handleRoot);
-    server.on("/set",        HTTP_GET,  handleSet);
-    server.on("/status",     HTTP_GET,  handleStatus);
-    server.on("/wifi-reset", HTTP_GET,  handleWifiReset);
+static void serverSetup() {
+    server.on("/",           HTTP_GET, handleRoot);
+    server.on("/set",        HTTP_GET, handleSet);
+    server.on("/status",     HTTP_GET, handleStatus);
+    server.on("/wifi-reset", HTTP_GET, handleWifiReset);
     ElegantOTA.begin(&server);
     server.begin();
+    g_srvStarted = true;
     Serial.printf("Webserver gestartet auf Port %d\n", WEB_PORT);
 }
 
-void wifiLoop() {
-    server.handleClient();
-    ElegantOTA.loop();
+// ── Öffentliche API ───────────────────────────────────────────
+
+void wifiBegin() {
+    wm.setConnectTimeout(WIFI_TIMEOUT_S);
+    wm.setConnectRetries(2);
+
+    if (!wm.getWiFiIsSaved()) {
+        Serial.println("Keine WLAN-Credentials — Offline-Betrieb");
+        return;
+    }
+
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(wm.getWiFiSSID(false).c_str(), wm.getWiFiPass(false).c_str());
+    Serial.print("WLAN verbinden");
+    uint32_t start = millis();
+    while (WiFi.status() != WL_CONNECTED &&
+           millis() - start < (uint32_t)WIFI_TIMEOUT_S * 1000) {
+        delay(200);
+        Serial.print(".");
+    }
+    Serial.println();
+
+    if (WiFi.status() == WL_CONNECTED) {
+        g_connected = true;
+        g_ip = WiFi.localIP().toString();
+        Serial.printf("WiFi verbunden: %s\n", g_ip.c_str());
+        serverSetup();
+    } else {
+        WiFi.disconnect(true);
+        Serial.println("WLAN fehlgeschlagen — Offline-Betrieb");
+    }
 }
 
-String wifiIP() { return g_ip; }
+void wifiStartPortal() {
+    wm.setConfigPortalTimeout(300);
+    wm.setConnectTimeout(WIFI_TIMEOUT_S);
+    wm.setAPCallback([](WiFiManager*) {
+        g_connected = false;
+        g_ip = "AP 192.168.4.1";
+        drawWifiSetup();
+    });
 
-bool wifiConnected() { return g_connected; }
+    bool ok = wm.startConfigPortal(WIFI_AP_SSID, WIFI_AP_PASS);
+
+    if (ok || WiFi.status() == WL_CONNECTED) {
+        g_connected = true;
+        g_ip = WiFi.localIP().toString();
+        Serial.printf("WiFi verbunden: %s\n", g_ip.c_str());
+        if (!g_srvStarted) serverSetup();
+    } else {
+        g_connected = false;
+        g_ip = "---";
+        Serial.println("Portal abgebrochen — Offline-Betrieb");
+    }
+}
+
+void wifiLoop() {
+    if (g_srvStarted) {
+        server.handleClient();
+        ElegantOTA.loop();
+    }
+}
+
+String wifiIP()        { return g_ip; }
+bool   wifiConnected() { return g_connected; }

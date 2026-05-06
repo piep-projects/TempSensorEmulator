@@ -210,8 +210,8 @@ void drawMain(float tempC, float ohm, uint8_t step,
 
     // ── Tasten-Hints (y 153–168) ──────────────────────────────
     tft.setTextColor(COL_DKGREY);
-    tft.drawString("BOOT -(", 4, 154);
-    const char* hint2 = "+) KEY";
+    tft.drawString("< - (3s:WLAN)", 4, 154);
+    const char* hint2 = "(3s:AUS) + >";
     int hw = tft.textWidth(hint2);
     tft.drawString(hint2, 320 - hw - 4, 154);
 }

@@ -85,8 +85,8 @@ def load_mono(size):
 
 F_F2   = load_regular(41)      # Font2: body text (16 px real bitmap)
 F_F4   = load_bold(62)         # Font4 ×1: headings (26 px real bitmap)
-F_TEMP = load_mono(s(69))      # Font7: temperature digits (48 px real)
-F_UNIT = load_bold(s(53))      # Font4 ×2 cap-height: 38 px real
+F_TEMP = load_mono(s(50))      # Font7: temperature digits — etwas kleiner
+F_UNIT = load_bold(s(50))      # gleiche em-Größe wie F_TEMP → gleiche Höhe
 
 # ── Hilfsfunktionen ───────────────────────────────────────────
 
@@ -159,16 +159,16 @@ def wifi_icon(draw, x, y, connected=True):
 def make_splash():
     img, draw = new_screen()
 
-    # Logo: data/logo.png is 260×158 px; on screen drawn at scale 0.46
-    # → rendered 120×73 px, centered at x=100, y=8.
-    # The source here is the original 1838×888 PNG — resize directly to
-    # the known rendered size to avoid applying 0.46 to the wrong base.
+    # Logo: originale Proportionen beibehalten (1838×888 = AR 2.07:1)
+    # Breite 120 px real → Höhe = round(120 * 888/1838) = 58 px
     src = Image.open(LOGO_SRC).convert("RGBA")
     wl  = Image.new("RGBA", src.size, (0, 0, 0, 0))
     wl.paste(Image.new("RGBA", src.size, (255, 255, 255, 255)), mask=src.split()[3])
-    render_w, render_h = 120, 73          # real pixels as rendered on display
+    render_w = 120
+    render_h = round(render_w * src.height / src.width)   # 58 px
     scaled = wl.resize((render_w * SCALE, render_h * SCALE), Image.LANCZOS)
-    img.paste(scaled, (s(100), s(8)), mask=scaled.split()[3])
+    # x=100 → (320-120)/2 = 100 zentriert; y=12 → etwas Abstand oben
+    img.paste(scaled, (s(100), s(12)), mask=scaled.split()[3])
 
     # "TempSensorEmulator" — Font4 (26 px), y=92
     draw_centered(draw, 92, "TempSensorEmulator", F_F4, YELLOW)
@@ -189,23 +189,17 @@ def make_main():
     separator(draw, 148)
 
     # ── Statusleiste (y 0–26) ─────────────────────────────────
-    # Logo x=2, y=3, maxW=28, maxH=20
-    logo_paste(img, 2, 3, 28, 20)
+    # Kein Logo — "TempSensorEmulator" direkt links, x=4
+    draw_text(draw, 4, 9, "TempSensorEmulator", F_F2, YELLOW)
 
-    # "TempSensorEmulator" gelb, Font2, x=34, y=9
-    draw_text(draw, 34, 9, "TempSensorEmulator", F_F2, YELLOW)
+    # WiFi + Batterie: y=12 → vertikal zentriert mit F_F2-Text bei y=9 (h=16)
+    wifi_icon(draw, 175, 12, connected=True)
+    bat_icon(draw, 190, 12, pct=78, charging=False)
+    draw_text(draw, 214, 9, "78%", F_F2, WHITE)
 
-    # WiFi-Icon x=162, y=8; IP x=176, y=9
-    wifi_icon(draw, 162, 8, connected=True)
-    draw_text(draw, 176, 9, "192.168.1.42", F_F2, WHITE)
-
-    # Batterie x=248, y=8 (8 im Icon, 9 für Text)
-    bat_icon(draw, 248, 8, pct=78, charging=False)
-    draw_text(draw, 273, 9, "78%", F_F2, WHITE)
-
-    # ── Tasten-Hint oben rechts (y 30 + 40) ──────────────────
-    draw_text_right(draw, 316, 30, "Temp +",    F_F2, YELLOW)
-    draw_text_right(draw, 316, 40, "3.5s: AUS", F_F2, WHITE)
+    # ── Tasten-Hint oben rechts (y 28 + 47, Abstand 19 px) ──
+    draw_text_right(draw, 316, 28, "Temp +",    F_F2, YELLOW)
+    draw_text_right(draw, 316, 47, "3.5s: AUS", F_F2, WHITE)
 
     # ── Temperatur (Font7 ≈ 48 px), zentriert in 260px-Zone ──
     temp_str = "27.0"
@@ -214,25 +208,22 @@ def make_main():
     ty_real = 63
     draw.text((s(tx_real), s(ty_real)), temp_str, font=F_TEMP, fill=WHITE)
 
-    # "oC" gelb, Font4×2 (cap-h ≈38 px), rechts an Temp, +16 px tiefer
-    draw.text((s(tx_real) + tw + s(4), s(ty_real) + s(16)),
-              "oC", font=F_UNIT, fill=YELLOW)
+    # "°C" gelb, gleiche em-Größe wie Temp → gleiche Höhe, top-aligned
+    draw.text((s(tx_real) + tw + s(4), s(ty_real)),
+              "°C", font=F_UNIT, fill=YELLOW)
 
-    # ── Tasten-Hint unten rechts (y 120 + 130) ───────────────
-    draw_text_right(draw, 316, 120, "Temp −",     F_F2, YELLOW)
-    draw_text_right(draw, 316, 130, "3.5s: WLAN", F_F2, WHITE)
+    # ── Tasten-Hint unten rechts (y 110 + 129, Abstand 19 px) ──
+    draw_text_right(draw, 316, 110, "Temp −",     F_F2, YELLOW)
+    draw_text_right(draw, 316, 129, "3.5s: WLAN", F_F2, WHITE)
 
     # ── Info-Zeile (y 148–170) ────────────────────────────────
     r_str = "R = 22 237 Ohm"
     rw    = text_width(draw, r_str, F_F2)
     draw_text(draw, 4, 153, r_str, F_F2, YELLOW)
 
-    # I²C-Block (7×7) + "I2C"
-    blk_size = s(7)
+    # I²C-Status: kein Block, Textfarbe grün=OK / rot=Fehler
     bx = s(4) + rw + s(6)
-    by = s(152)
-    draw.rectangle([bx, by, bx + blk_size, by + blk_size], fill=RED)
-    draw.text((bx + blk_size + s(2), s(153)), "I2C", font=F_F2, fill=YELLOW)
+    draw.text((bx, s(153)), "I2C", font=F_F2, fill=GREEN)
 
     return img
 
@@ -246,22 +237,19 @@ def make_shutdown():
     draw.rectangle([s(4), s(4), s(4)+s(312), s(4)+s(162)],
                    outline=YELLOW, width=s(1))
 
-    # Logo x=8, y=8, maxW=24, maxH=16
-    logo_paste(img, 8, 8, 24, 16)
-
-    # "TempSensorEmulator" — Font2, x=36, y=10
-    draw_text(draw, 36, 10, "TempSensorEmulator", F_F2, YELLOW)
+    # Kein Logo — "TempSensorEmulator" direkt links (wie Main-Screen)
+    draw_text(draw, 10, 10, "TempSensorEmulator", F_F2, YELLOW)
 
     separator(draw, 28, SEP_YEL)
 
-    # "Geraet wird ausgeschaltet" — Font4, zentriert, y=34
-    draw_centered(draw, 34, "Geraet wird ausgeschaltet", F_F4, YELLOW)
+    # "... wird ausgeschaltet" — Font4, zentriert, y=34
+    draw_centered(draw, 34, "... wird ausgeschaltet", F_F4, YELLOW)
 
     separator(draw, 56, SEP_YEL)
 
-    # Letzte Temperatur — Font2, y=62
-    draw_centered(draw, 62, "Letzte Temperatur:  27.0 oC", F_F2, MIDGREY)
-    draw_centered(draw, 76, "Wert gespeichert.",            F_F2, MIDGREY)
+    # Letzte Temperatur — Font2, y=62 + y=76
+    draw_centered(draw, 62, "Letzte Temperatur:  27.0 °C", F_F2, MIDGREY)
+    draw_centered(draw, 76, "wurde gespeichert.",           F_F2, MIDGREY)
 
     separator(draw, 92, SEP_YEL)
 
@@ -286,16 +274,13 @@ def make_wifi_setup():
     draw.rectangle([s(4), s(4), s(4)+s(312), s(4)+s(162)],
                    outline=LTBLUE, width=s(1))
 
-    # Logo x=8, y=8, maxW=24, maxH=16
-    logo_paste(img, 8, 8, 24, 16)
-
-    # "TempSensorEmulator" — Font2, x=36, y=10
-    draw_text(draw, 36, 10, "TempSensorEmulator", F_F2, YELLOW)
+    # Kein Logo — "TempSensorEmulator" direkt links
+    draw_text(draw, 10, 10, "TempSensorEmulator", F_F2, YELLOW)
 
     separator(draw, 28, SEP_BLU)
 
-    # "WiFi-Konfiguration" — Font4, zentriert, y=34
-    draw_centered(draw, 34, "WiFi-Konfiguration", F_F4, LTBLUE)
+    # "WiFi-Konfiguration" — Font4, linksbündig, y=34
+    draw_text(draw, 10, 34, "WiFi-Konfiguration", F_F4, LTBLUE)
 
     separator(draw, 54, SEP_BLU)
 
@@ -313,8 +298,8 @@ def make_wifi_setup():
 
     separator(draw, 140, SEP_BLU)
 
-    # "Warte auf Verbindung ..." — Font2, y=146
-    draw_centered(draw, 146, "Warte auf Verbindung ...", F_F2, DARKGREY)
+    # IP-Adresse (nach Verbindung) — Font2, y=146, gelb, linksbündig
+    draw_text(draw, 10, 146, "Verbunden  ·  192.168.1.42", F_F2, YELLOW)
 
     return img
 

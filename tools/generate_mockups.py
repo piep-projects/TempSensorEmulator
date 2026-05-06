@@ -199,7 +199,7 @@ def make_main():
 
     # ── Tasten-Hint oben rechts (y 28 + 47, Abstand 19 px) ──
     draw_text_right(draw, 316, 28, "Temp +",    F_F2, YELLOW)
-    draw_text_right(draw, 316, 47, "3.5s: AUS", F_F2, WHITE)
+    draw_text_right(draw, 316, 47, "lang: AUS", F_F2, WHITE)
 
     # ── Temperatur (Font7 ≈ 48 px), zentriert in 260px-Zone ──
     temp_str = "27.0"
@@ -208,13 +208,12 @@ def make_main():
     ty_real = 63
     draw.text((s(tx_real), s(ty_real)), temp_str, font=F_TEMP, fill=WHITE)
 
-    # "°C" gelb, gleiche em-Größe wie Temp → gleiche Höhe, top-aligned
-    draw.text((s(tx_real) + tw + s(4), s(ty_real)),
-              "°C", font=F_UNIT, fill=YELLOW)
+    # Grad-Symbol: nur kleines "o" (F_F4)
+    draw.text((s(tx_real) + tw + s(6), s(ty_real + 2)), "o", font=F_F4, fill=YELLOW)
 
     # ── Tasten-Hint unten rechts (y 110 + 129, Abstand 19 px) ──
     draw_text_right(draw, 316, 110, "Temp −",     F_F2, YELLOW)
-    draw_text_right(draw, 316, 129, "3.5s: WLAN", F_F2, WHITE)
+    draw_text_right(draw, 316, 129, "lang: WLAN", F_F2, WHITE)
 
     # ── Info-Zeile (y 148–170) ────────────────────────────────
     r_str = "R = 22 237 Ohm"

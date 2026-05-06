@@ -207,7 +207,7 @@ void drawMain(float tempC, float ohm,
     const char* hP1 = "Temp +";
     tft.drawString(hP1, 320 - tft.textWidth(hP1) - 4, 28);
     tft.setTextColor(COL_WHITE);
-    const char* hP2 = "3.5s: AUS";
+    const char* hP2 = "lang: AUS";
     tft.drawString(hP2, 320 - tft.textWidth(hP2) - 4, 47);
 
     // ── Temperatur zentriert (y 63–111) ──────────────────────
@@ -225,11 +225,11 @@ void drawMain(float tempC, float ohm,
 
     // "oC" in Gelb, Font4×2 (32px) — bottom-aligned mit Temperatur
     // Font6 enthält nur Ziffern+Doppelpunkt, daher Font4 bei size 2
+    // Grad-Symbol: nur kleines "o" (Font4×1)
     tft.setFont(&fonts::Font4);
-    tft.setTextSize(2);
     tft.setTextColor(COL_YELLOW);
-    tft.drawString("oC", tx + tw + 4, ty + 16);
     tft.setTextSize(1);
+    tft.drawString("o", tx + tw + 6, ty + 2);
 
     // ── Tasten-Hint unten rechts: BOOT = Temp − ──────────────
     tft.setFont(&fonts::Font2);
@@ -237,7 +237,7 @@ void drawMain(float tempC, float ohm,
     const char* hM1 = "Temp -";
     tft.drawString(hM1, 320 - tft.textWidth(hM1) - 4, 110);
     tft.setTextColor(COL_WHITE);
-    const char* hM2 = "3.5s: WLAN";
+    const char* hM2 = "lang: WLAN";
     tft.drawString(hM2, 320 - tft.textWidth(hM2) - 4, 129);
 
     drawSeparator(148);

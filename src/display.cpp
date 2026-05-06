@@ -212,10 +212,13 @@ void drawMain(float tempC, float ohm,
     tft.setTextColor(COL_WHITE);
     tft.drawString(tmpBuf, tx, ty);
 
-    // "oC" in Gelb, Font6 (24px) — bottom-aligned mit Temperatur
-    tft.setFont(&fonts::Font6);
+    // "oC" in Gelb, Font4×2 (32px) — bottom-aligned mit Temperatur
+    // Font6 enthält nur Ziffern+Doppelpunkt, daher Font4 bei size 2
+    tft.setFont(&fonts::Font4);
+    tft.setTextSize(2);
     tft.setTextColor(COL_YELLOW);
-    tft.drawString("oC", tx + tw + 4, ty + 22);
+    tft.drawString("oC", tx + tw + 4, ty + 16);
+    tft.setTextSize(1);
 
     // ── Tasten-Hint unten rechts: BOOT = Temp − ──────────────
     tft.setFont(&fonts::Font2);

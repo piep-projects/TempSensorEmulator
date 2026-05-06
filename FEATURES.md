@@ -9,9 +9,10 @@ Hardware: LilyGo T-Display-S3 · MCP4018T-503 (50 kΩ) · LiPo 700 mAh
 
 ## 1. Startsequenz
 
-**Splash-Screen** (2 Sekunden):
-- piep design Logo zentriert auf dem Display
-- Firmware-Version unten rechts (z. B. `v1.0.0`)
+**Splash-Screen** (1,5 Sekunden):
+- piep design Logo (weiß auf schwarz) zentriert in oberer Bildschirmhälfte
+- „TempSensorEmulator" in Gelb unterhalb des Logos
+- Firmware-Version in Dunkelgrau darunter
 - Keine Benutzeraktion erforderlich; danach automatisch → Hauptscreen
 
 ---
@@ -22,37 +23,42 @@ Layout (Querformat 320 × 170 px):
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ Wolf CHA-07                         ))) 192.168.1.x  🔋 78% │  ← Statusleiste
+│ [Logo] TempSensorEmulator    ))) 192.168.1.x  🔋 78%  Temp +│  ← Statusleiste
+│                                                      3.5s:AUS│
 ├──────────────────────────────────────────────────────────────┤
 │                                                               │
-│                      -5.5 °C                                  │  ← groß, zentriert
-│                                                               │
-│    R = 22 237 Ω              Schritt 57 / 127                 │  ← Info
+│                      -5.5 °C                         Temp −  │
+│                                                     3.5s:WLAN│
 ├──────────────────────────────────────────────────────────────┤
-│  BOOT ▼ (–)                                   (＋) ▲ KEY    │  ← Tasten-Hint
+│  R = 22 237 Ω  ■ I²C                                        │  ← Info
 └──────────────────────────────────────────────────────────────┘
 ```
 
 | Element | Beschreibung |
 |---|---|
-| Temperatur | Groß, weiß; ½-°C-Schritte |
-| Widerstand | Berechneter NTC-Wert in Ω |
-| Schritt | MCP4018-Schrittnummer (0–127) |
+| Logo + „TempSensorEmulator" | Weiß / Gelb; links in Statusleiste |
+| Temperatur | Groß, weiß; °C in Gelb; ½-°C-Schritte |
+| Widerstand | Berechneter NTC-Wert in Ω (Gelb) |
+| I²C-Statusblock | Grün = OK, Rot = Fehler; direkt neben R-Wert |
 | WiFi-Symbol | Signal-Balken + IP-Adresse; rot = getrennt |
-| Batterie | Icon + Prozent; Blitz-Symbol wenn laden |
+| Batterie | Icon + Prozent; Blitz-Symbol beim Laden |
+| Knopf-Hints | „Temp +" / „Temp −" gelb; Langdruck-Funktion weiß |
 
 ---
 
 ## 3. Temperaturregelung
 
+Tasten lösen **beim Loslassen** aus — kein Auto-Repeat.
+
 | Aktion | Funktion |
 |---|---|
-| Kurzer Druck BOOT | −0,5 °C |
-| Kurzer Druck KEY | +0,5 °C |
-| Halten BOOT | Schnell runter (auto-repeat 130 ms) |
-| Halten KEY | Schnell hoch (auto-repeat 130 ms) |
+| BOOT loslassen (< 3,5 s) | −0,5 °C |
+| KEY loslassen (< 3,5 s) | +0,5 °C |
+| BOOT ≥ 3,5 s halten + loslassen | WLAN-Portal starten |
+| KEY ≥ 3,5 s halten + loslassen | Deep Sleep |
 | Bereich | −15 °C bis +30 °C |
 
+Beim langen Halten erfolgt keine Temperaturänderung.  
 Eingestellte Temperatur wird sofort an MCP4018 übertragen.  
 Wert wird im Flash (NVS) gespeichert und nach Neustart wiederhergestellt.
 
@@ -62,7 +68,7 @@ Wert wird im Flash (NVS) gespeichert und nach Neustart wiederhergestellt.
 
 | Aktion | Funktion |
 |---|---|
-| Beide Tasten gleichzeitig 2 s halten | Display aus, ESP32 → Deep Sleep |
+| KEY ≥ 3,5 s halten + loslassen | Shutdown-Screen (10 s), dann Deep Sleep |
 | Beliebige Taste drücken | Aufwachen, Splash → Hauptscreen |
 
 Im Deep Sleep: MCP4018 hält letzten Wert (I²C-Pegel fallen ab → Widerstand undefiniert).  
@@ -100,11 +106,11 @@ Spannungs-zu-Prozent-Kurve (LiPo typisch):
 > Browser öffnet sich automatisch beim Verbinden mit dem AP — wie Hotel-WLAN.
 
 ### Verbindungsaufbau
-1. Gespeicherte Zugangsdaten (NVS) vorhanden → verbinden, max. 10 s
-2. Kein Netz konfiguriert oder Verbindung fehlgeschlagen → **WiFiManager Captive Portal**
+1. Beim Start: stilles Reconnect (max. 10 s), kein Portal, kein Blockieren
+2. Portal **nur auf Knopfdruck**: BOOT ≥ 3,5 s halten + loslassen
    - SSID: `CHA-Emulator`
    - Passwort: `wolf1234`
-   - Browser öffnet sich automatisch → Netzauswahl + Passwort → Speichern → Neustart
+   - Browser öffnet sich automatisch → Netzauswahl + Passwort → Speichern
 
 ### Web-Interface (Port 80)
 

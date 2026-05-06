@@ -1,7 +1,7 @@
 #pragma once
 
 // ── Firmware ──────────────────────────────────────────────────
-#define FW_VERSION      "v1.2.0"
+#define FW_VERSION      "v1.3.0"
 
 // ── T-Display-S3 Tasten ───────────────────────────────────────
 #define PIN_BTN_MINUS    0    // BOOT-Taste  (active LOW)
@@ -51,11 +51,9 @@
 #define TEMP_DEFAULT     10.0f
 
 // ── Tasten-Timing ─────────────────────────────────────────────
-#define BTN_HOLD_MS       600UL   // ab hier Auto-Repeat
-#define BTN_REPEAT_MS     130UL   // Auto-Repeat-Intervall
-#define BTN_ACTION_MS    3500UL   // lange halten → Sonderfunktion
-#define SLEEP_HOLD_MS    BTN_ACTION_MS  // Plus lang → Deep Sleep
-#define WIFI_TRIGGER_MS  BTN_ACTION_MS  // Minus lang → WiFi-Portal
+// Option B: Auslösung beim Loslassen, kein Auto-Repeat
+#define BTN_ACTION_MS    3500UL   // >= = Sonderfunktion beim Loslassen
+#define SHUTDOWN_COUNTDOWN_S  10  // Sekunden Countdown vor Deep Sleep
 
 // ── Batterie ──────────────────────────────────────────────────
 #define BAT_WARN_PCT       15     // Icon blinkt rot

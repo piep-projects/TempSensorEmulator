@@ -16,7 +16,7 @@ except ImportError:
     print("Pillow fehlt. Installieren mit:  pip install Pillow")
     sys.exit(1)
 
-SRC  = Path(__file__).parent.parent / "datasheets" / "piep-design1.png"
+SRC  = Path(__file__).parent.parent / "datasheets" / "piep-logo-projects1.png"
 DST  = Path(__file__).parent.parent / "data" / "logo.png"
 SIZE = (260, 158)   # passt zentriert in 320×170 Display
 

@@ -66,9 +66,9 @@ Das Gerät hat vier Display-Zustände (Mockups in `mockups/`):
 |---|---|
 | **Splash-Screen** | piep design Logo (weiß) + Firmware-Version beim Start |
 | **Temperaturanzeige** | −15 °C bis +30 °C, große Anzeige, Schritte 0,5 °C |
-| **Tastensteuerung** | BOOT = −0,5 °C · KEY = +0,5 °C · Halten = schnell (Auto-Repeat) |
-| **Deep Sleep** | KEY 3,5 s halten → Stromsparmodus; beliebige Taste → Aufwachen |
-| **WiFi on Demand** | BOOT 3,5 s halten → Captive Portal; beim Start nur stilles Reconnect |
+| **Tastensteuerung** | Auslösung beim Loslassen · BOOT loslassen < 3,5 s = −0,5 °C · KEY loslassen < 3,5 s = +0,5 °C · kein Auto-Repeat |
+| **Deep Sleep** | KEY ≥ 3,5 s halten + loslassen → Stromsparmodus; beliebige Taste → Aufwachen |
+| **WiFi on Demand** | BOOT ≥ 3,5 s halten + loslassen → Captive Portal; beim Start nur stilles Reconnect |
 | **Batterieanzeige** | Ladestand in % + Icon; Blitz beim Laden |
 | **Warnung** | < 15 % rot; < 5 % → automatisch Sleep |
 | **Web-Interface** | Temperatur vom Handy/PC einstellen, Status, WLAN-Config |
@@ -213,6 +213,7 @@ TempSensorEmulator/
 | 1.0.0 | 2026-05-06 | Initiale Implementierung — Grundfunktion (NTC-Emulation, Display, Tasten) |
 | 1.1.0 | 2026-05-06 | Batterie, Deep Sleep, WiFiManager Captive Portal, Web-Interface, OTA |
 | 1.2.0 | 2026-05-06 | WiFi optional (on-demand via BOOT 3,5 s); KEY 3,5 s = Sleep; LittleFS-Fix |
+| 1.3.0 | 2026-05-06 | Neues Logo (piep-logo-projects1); überarbeitetes Display-Design (gelbe Farbgebung, Knopf-Beschriftung); Release-Trigger-Tasten (kein Auto-Repeat); Shutdown-Countdown 10 s |
 
 ---
 

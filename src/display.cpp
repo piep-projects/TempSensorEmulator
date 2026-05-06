@@ -57,29 +57,29 @@ static LGFX tft;
 // ── Farben ────────────────────────────────────────────────────
 static constexpr uint32_t COL_BG       = 0x000000u;
 static constexpr uint32_t COL_WHITE    = 0xFFFFFFu;
-static constexpr uint32_t COL_CYAN     = 0x00DCDCu;
 static constexpr uint32_t COL_YELLOW   = 0xFFDC00u;
 static constexpr uint32_t COL_GREEN    = 0x00C850u;
 static constexpr uint32_t COL_RED      = 0xDC3232u;
 static constexpr uint32_t COL_ORANGE   = 0xFF9600u;
 static constexpr uint32_t COL_DKGREY   = 0x505050u;
 static constexpr uint32_t COL_MIDGREY  = 0x8C8C8Cu;
-static constexpr uint32_t COL_BLUE     = 0x2050C8u;
 static constexpr uint32_t COL_LTBLUE   = 0x50A0FFu;
 static constexpr uint32_t COL_SEP      = 0x282828u;
+static constexpr uint32_t COL_SEP_YEL  = 0x504000u;
+static constexpr uint32_t COL_SEP_BLU  = 0x1E3C78u;
 
 // ── Hilfsfunktionen ──────────────────────────────────────────
 
-static void drawSeparator(int y) {
-    tft.drawFastHLine(0, y, 320, COL_SEP);
+static void drawSeparator(int y, uint32_t col = COL_SEP) {
+    tft.drawFastHLine(0, y, 320, col);
 }
 
-// Batterie-Icon bei (x,y), Breite 22, Höhe 10
+// Batterie-Icon bei (x,y), Breite 22px, Höhe 10px
 static void drawBatIcon(int x, int y, int pct, bool charging) {
     uint32_t fillColor = pct < BAT_WARN_PCT ? COL_RED :
                          pct < 30           ? COL_ORANGE : COL_GREEN;
     tft.drawRect(x, y, 20, 10, COL_MIDGREY);
-    tft.fillRect(x + 20, y + 3, 2, 4, COL_MIDGREY);  // Pol
+    tft.fillRect(x + 20, y + 3, 2, 4, COL_MIDGREY);
     int fw = constrain((pct * 18) / 100, 0, 18);
     if (fw > 0) tft.fillRect(x + 1, y + 1, fw, 8, fillColor);
     if (charging) {
@@ -90,16 +90,15 @@ static void drawBatIcon(int x, int y, int pct, bool charging) {
     }
 }
 
-// WiFi-Balken (3 Stufen) bei (x,y)
+// WiFi-Balken (3 Stufen) bei (x,y), Breite ~11px, Höhe 10px
 static void drawWifiIcon(int x, int y, bool connected) {
     uint32_t c = connected ? COL_WHITE : COL_DKGREY;
-    // Drei Balken, steigend
     tft.fillRect(x,      y + 6, 3, 4,  c);
     tft.fillRect(x + 4,  y + 3, 3, 7,  c);
     tft.fillRect(x + 8,  y,     3, 10, c);
 }
 
-// Logo aus LittleFS zeichnen (weiß auf schwarz)
+// Logo aus LittleFS zeichnen (PNG, weiß auf schwarz)
 static void drawLogo(int x, int y, int maxW, int maxH) {
     File f = LittleFS.open("/logo.png");
     if (!f) return;
@@ -110,6 +109,16 @@ static void drawLogo(int x, int y, int maxW, int maxH) {
     f.close();
     tft.drawPng(buf, sz, x, y, maxW, maxH);
     free(buf);
+}
+
+// Zentrierten Text zeichnen; gibt die tatsächliche Textbreite zurück
+static int drawCentered(const char* txt, int y,
+                         const lgfx::IFont* font, uint32_t col) {
+    tft.setFont(font);
+    tft.setTextColor(col);
+    int tw = tft.textWidth(txt);
+    tft.drawString(txt, (320 - tw) / 2, y);
+    return tw;
 }
 
 // ── Öffentliche API ───────────────────────────────────────────
@@ -133,154 +142,193 @@ void displayBrightness(uint8_t val) {
 // ── SCREEN 1: Splash ─────────────────────────────────────────
 void drawSplash() {
     tft.fillScreen(COL_BG);
-    drawLogo(30, 6, 260, 148);
 
-    // Firmware-Version unten rechts
-    tft.setFont(&fonts::Font2);
-    tft.setTextColor(COL_DKGREY);
+    // Logo in oberer Hälfte zentriert
+    drawLogo(10, 5, 300, 80);
+
+    // "TempSensorEmulator" in Gelb
+    tft.setFont(&fonts::Font4);
     tft.setTextSize(1);
+    tft.setTextColor(COL_YELLOW);
+    String title = "TempSensorEmulator";
+    int tw = tft.textWidth(title);
+    tft.drawString(title, (320 - tw) / 2, 92);
+
+    // Firmware-Version in Dunkelgrau
+    tft.setFont(&fonts::Font2);
+    tft.setTextSize(1);
+    tft.setTextColor(COL_DKGREY);
     String ver = FW_VERSION;
-    int tw = tft.textWidth(ver);
-    tft.drawString(ver, 320 - tw - 4, 156);
+    tw = tft.textWidth(ver);
+    tft.drawString(ver, (320 - tw) / 2, 112);
 }
 
 // ── SCREEN 2: Hauptscreen ─────────────────────────────────────
-void drawMain(float tempC, float ohm, uint8_t step,
+void drawMain(float tempC, float ohm,
               int batPct, bool charging,
               const char* wifiIP, bool i2cOk) {
     tft.fillScreen(COL_BG);
-
-    // ── Statusleiste (y 0–19) ────────────────────────────────
-    // piep design Logo klein links
-    drawLogo(2, 2, 28, 16);
-
-    // I2C-Status
-    tft.setFont(&fonts::Font2);
     tft.setTextSize(1);
-    tft.setTextColor(i2cOk ? COL_GREEN : COL_RED);
-    tft.drawString(i2cOk ? "I2C" : "I2C!", 36, 4);
 
-    // WiFi-Icon + IP
+    // ── Statusleiste (y 0–25) ────────────────────────────────
+    drawLogo(2, 3, 28, 20);
+
+    tft.setFont(&fonts::Font2);
+    tft.setTextColor(COL_YELLOW);
+    tft.drawString("TempSensorEmulator", 34, 9);
+
     bool connected = (wifiIP[0] != '-' && wifiIP[0] != 'A');
-    drawWifiIcon(100, 4, connected);
+    drawWifiIcon(162, 8, connected);
     tft.setTextColor(connected ? COL_WHITE : COL_DKGREY);
-    tft.drawString(wifiIP, 114, 4);
+    tft.drawString(wifiIP, 176, 9);
 
-    // Batterie-Icon + Prozent
-    drawBatIcon(268, 5, batPct, charging);
+    drawBatIcon(248, 8, batPct, charging);
     tft.setTextColor(batPct < BAT_WARN_PCT ? COL_RED : COL_WHITE);
     char buf[8];
     snprintf(buf, sizeof(buf), "%d%%", batPct);
-    tft.drawString(buf, 294, 4);
+    tft.drawString(buf, 273, 9);
 
-    drawSeparator(20);
+    drawSeparator(26);
 
-    // ── Temperatur zentriert (y 22–130) ──────────────────────
+    // ── Tasten-Hint oben rechts: KEY = Temp + ────────────────
+    tft.setFont(&fonts::Font2);
+    tft.setTextColor(COL_YELLOW);
+    const char* hP1 = "Temp +";
+    tft.drawString(hP1, 320 - tft.textWidth(hP1) - 4, 30);
+    tft.setTextColor(COL_WHITE);
+    const char* hP2 = "3.5s: AUS";
+    tft.drawString(hP2, 320 - tft.textWidth(hP2) - 4, 40);
+
+    // ── Temperatur zentriert (y 63–111) ──────────────────────
     char tmpBuf[10];
     snprintf(tmpBuf, sizeof(tmpBuf), "%.1f", tempC);
 
     tft.setFont(&fonts::Font7);
-    tft.setTextSize(1);
     int tw = tft.textWidth(tmpBuf);
-    int tx = (320 - tw) / 2 - 18;
-    int ty = 28;
+    int tx = (260 - tw) / 2;   // in 260px-Zone links (rechts 60px für Hints)
+    if (tx < 4) tx = 4;
+    int ty = 63;
+
     tft.setTextColor(COL_WHITE);
     tft.drawString(tmpBuf, tx, ty);
 
-    // °C rechts daneben
-    tft.setFont(&fonts::Font4);
-    tft.setTextColor(COL_CYAN);
-    tft.drawString("oC", tx + tw + 4, ty + 20);  // 'o' als Grad-Ersatz
+    // "oC" in Gelb, Font6 (24px) — bottom-aligned mit Temperatur
+    tft.setFont(&fonts::Font6);
+    tft.setTextColor(COL_YELLOW);
+    tft.drawString("oC", tx + tw + 4, ty + 22);
 
-    drawSeparator(132);
-
-    // ── Info-Zeile (y 134–148) ────────────────────────────────
+    // ── Tasten-Hint unten rechts: BOOT = Temp − ──────────────
     tft.setFont(&fonts::Font2);
     tft.setTextColor(COL_YELLOW);
-    char info[32];
+    const char* hM1 = "Temp -";
+    tft.drawString(hM1, 320 - tft.textWidth(hM1) - 4, 120);
+    tft.setTextColor(COL_WHITE);
+    const char* hM2 = "3.5s: WLAN";
+    tft.drawString(hM2, 320 - tft.textWidth(hM2) - 4, 130);
+
+    drawSeparator(148);
+
+    // ── Info-Zeile: R-Wert + I²C-Statusblock ─────────────────
+    tft.setFont(&fonts::Font2);
+    char info[24];
     snprintf(info, sizeof(info), "R = %.0f Ohm", ohm);
-    tft.drawString(info, 4, 136);
+    tft.setTextColor(COL_YELLOW);
+    tft.drawString(info, 4, 153);
 
-    char step_str[20];
-    snprintf(step_str, sizeof(step_str), "Schritt %d / 127", step);
-    int stw = tft.textWidth(step_str);
-    tft.drawString(step_str, 320 - stw - 4, 136);
-
-    drawSeparator(150);
-
-    // ── Tasten-Hints (y 153–168) ──────────────────────────────
-    tft.setTextColor(COL_DKGREY);
-    tft.drawString("< - (3s:WLAN)", 4, 154);
-    const char* hint2 = "(3s:AUS) + >";
-    int hw = tft.textWidth(hint2);
-    tft.drawString(hint2, 320 - hw - 4, 154);
+    int rw = tft.textWidth(info);
+    int bx = 4 + rw + 6;
+    int by = 152;
+    tft.fillRect(bx, by, 7, 7, i2cOk ? COL_GREEN : COL_RED);
+    tft.setTextColor(COL_YELLOW);
+    tft.drawString("I2C", bx + 9, 153);
 }
 
 // ── SCREEN 3: WiFi-Setup ─────────────────────────────────────
 void drawWifiSetup() {
     tft.fillScreen(COL_BG);
-    tft.drawRect(4, 4, 312, 162, COL_BLUE);
+    tft.setTextSize(1);
 
+    // Blauer Rahmen
+    tft.drawRect(4, 4, 312, 162, COL_LTBLUE);
+
+    // ── Logo + Titel Header ───────────────────────────────────
+    drawLogo(8, 8, 24, 16);
+
+    tft.setFont(&fonts::Font2);
+    tft.setTextColor(COL_YELLOW);
+    tft.drawString("TempSensorEmulator", 36, 10);
+
+    drawSeparator(28, COL_SEP_BLU);
+
+    // ── Inhalt ───────────────────────────────────────────────
     tft.setFont(&fonts::Font4);
     tft.setTextColor(COL_LTBLUE);
-    int tw = tft.textWidth("WiFi-Konfiguration");
-    tft.drawString("WiFi-Konfiguration", (320 - tw) / 2, 8);
+    tft.setTextSize(1);
+    drawCentered("WiFi-Konfiguration", 34, &fonts::Font4, COL_LTBLUE);
 
-    drawSeparator(36);
+    drawSeparator(54, COL_SEP_BLU);
 
+    // SSID und Passwort
+    drawWifiIcon(14, 62, true);
     tft.setFont(&fonts::Font2);
-    // AP-Name und Passwort
-    drawWifiIcon(14, 46, true);
     tft.setTextColor(COL_WHITE);
-    tft.drawString("AP:  " WIFI_AP_SSID, 30, 44);
+    tft.drawString("AP:  " WIFI_AP_SSID, 30, 60);
     tft.setTextColor(COL_MIDGREY);
-    tft.drawString("PW:  " WIFI_AP_PASS, 30, 60);
+    tft.drawString("PW:  " WIFI_AP_PASS, 30, 74);
 
-    drawSeparator(76);
+    drawSeparator(88, COL_SEP_BLU);
 
-    // Schritt-für-Schritt-Anleitung
+    // Schritt-für-Schritt
+    tft.setFont(&fonts::Font2);
     tft.setTextColor(COL_MIDGREY);
-    tft.drawString("1.  Handy mit  \"" WIFI_AP_SSID "\"  verbinden", 12, 84);
-    tft.drawString("2.  Browser oeffnet sich automatisch", 12, 102);
-    tft.drawString("3.  Heimnetz waehlen + Passwort eingeben", 12, 120);
+    tft.drawString("1.  Handy mit  \"" WIFI_AP_SSID "\"  verbinden", 12, 96);
+    tft.drawString("2.  Browser oeffnet sich automatisch",          12, 110);
+    tft.drawString("3.  Heimnetz waehlen + Passwort eingeben",      12, 124);
 
-    drawSeparator(140);
+    drawSeparator(140, COL_SEP_BLU);
     tft.setTextColor(COL_DKGREY);
-    int ww = tft.textWidth("Warte auf Verbindung ...");
-    tft.drawString("Warte auf Verbindung ...", (320 - ww) / 2, 146);
+    drawCentered("Warte auf Verbindung ...", 146, &fonts::Font2, COL_DKGREY);
 }
 
-// ── SCREEN 4: Shutdown ───────────────────────────────────────
-void drawShutdown(float tempC) {
+// ── SCREEN 4: Shutdown (mit Countdown) ───────────────────────
+void drawShutdown(float tempC, int countdownSec) {
     tft.fillScreen(COL_BG);
-    tft.drawRect(4, 4, 312, 162, COL_RED);
+    tft.setTextSize(1);
 
-    tft.setFont(&fonts::Font4);
-    tft.setTextColor(COL_RED);
-    int tw = tft.textWidth("Wird ausgeschaltet");
-    tft.drawString("Wird ausgeschaltet", (320 - tw) / 2, 10);
+    // Gelber Rahmen
+    tft.drawRect(4, 4, 312, 162, COL_YELLOW);
 
-    drawSeparator(40);
+    // ── Logo + Titel Header ───────────────────────────────────
+    drawLogo(8, 8, 24, 16);
 
     tft.setFont(&fonts::Font2);
-    tft.setTextColor(COL_MIDGREY);
+    tft.setTextColor(COL_YELLOW);
+    tft.drawString("TempSensorEmulator", 36, 10);
+
+    drawSeparator(28, COL_SEP_YEL);
+
+    // "Wird ausgeschaltet"
+    drawCentered("Geraet wird ausgeschaltet", 34, &fonts::Font4, COL_YELLOW);
+
+    drawSeparator(56, COL_SEP_YEL);
+
+    // Letzte Temperatur
+    tft.setFont(&fonts::Font2);
     char buf[40];
     snprintf(buf, sizeof(buf), "Letzte Temperatur:  %.1f oC", tempC);
-    tw = tft.textWidth(buf);
-    tft.drawString(buf, (320 - tw) / 2, 50);
-    tw = tft.textWidth("Wert gespeichert.");
-    tft.drawString("Wert gespeichert.", (320 - tw) / 2, 68);
+    drawCentered(buf, 62, &fonts::Font2, COL_MIDGREY);
+    drawCentered("Wert gespeichert.", 76, &fonts::Font2, COL_MIDGREY);
 
-    drawSeparator(88);
+    drawSeparator(92, COL_SEP_YEL);
 
-    tft.setTextColor(COL_ORANGE);
-    tw = tft.textWidth("Bitte echten Fuhler wieder");
-    tft.drawString("Bitte echten Fuhler wieder", (320 - tw) / 2, 96);
-    tw = tft.textWidth("an Heizung anschliessen!");
-    tft.drawString("an Heizung anschliessen!", (320 - tw) / 2, 114);
+    // Wichtiger Hinweis
+    drawCentered("Bitte echten Fuehler wieder",  98, &fonts::Font2, COL_YELLOW);
+    drawCentered("an Heizung anschliessen!", 112, &fonts::Font2, COL_YELLOW);
 
-    drawSeparator(136);
-    tft.setTextColor(COL_DKGREY);
-    tw = tft.textWidth("Ausschalten in  2 s ...");
-    tft.drawString("Ausschalten in  2 s ...", (320 - tw) / 2, 142);
+    drawSeparator(128, COL_SEP_YEL);
+
+    // Countdown
+    char cdBuf[24];
+    snprintf(cdBuf, sizeof(cdBuf), "Ausschalten in  %d s ...", countdownSec);
+    drawCentered(cdBuf, 136, &fonts::Font2, COL_DKGREY);
 }

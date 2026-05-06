@@ -4,7 +4,7 @@
 | Feld | Wert |
 |---|---|
 | Dokument | FDS-TempSensorEmulator |
-| Version | 1.0 |
+| Version | 1.3 |
 | Status | In Bearbeitung |
 | Autor | piep design |
 | Datum | 2026-05-06 |
@@ -187,10 +187,10 @@ Interpolation linear zwischen Stützpunkten. Messung alle 10 s, gleitender Mitte
 | ID | Anforderung |
 |---|---|
 | FR-01.1 | Nach dem Einschalten oder Aufwachen aus Deep Sleep zeigt das Gerät den Splash-Screen. |
-| FR-01.2 | Der Splash-Screen enthält das piep design Logo (aus LittleFS) zentriert auf schwarzem Hintergrund. |
-| FR-01.3 | Die Firmware-Version (`vMAJOR.MINOR.PATCH`) wird unten rechts im Splash-Screen angezeigt. |
+| FR-01.2 | Der Splash-Screen zeigt das piep design Logo (aus LittleFS, weiß auf schwarz) zentriert in der oberen Bildschirmhälfte. |
+| FR-01.3 | Unterhalb des Logos erscheint der Text „TempSensorEmulator" in Gelb, darunter die Firmware-Version in Dunkelgrau. |
 | FR-01.4 | Der Splash-Screen bleibt 1,5 Sekunden sichtbar. |
-| FR-01.5 | Nach Ablauf der 2 Sekunden wechselt das Gerät selbstständig in den Hauptscreen. |
+| FR-01.5 | Nach Ablauf der 1,5 Sekunden wechselt das Gerät selbstständig in den Hauptscreen. |
 | FR-01.6 | Beim ersten Start ohne NVS-Daten wird als Starttemperatur +10,0 °C verwendet. |
 | FR-01.7 | War ein Wert in NVS gespeichert, wird dieser unmittelbar nach dem Start an den MCP4018 übertragen — noch während des Splash-Screens. |
 
@@ -198,21 +198,23 @@ Interpolation linear zwischen Stützpunkten. Messung alle 10 s, gleitender Mitte
 
 | ID | Anforderung |
 |---|---|
-| FR-02.1 | Der Hauptscreen zeigt die aktuelle Simulationstemperatur in großer Schrift zentriert. |
-| FR-02.2 | Unterhalb der Temperatur werden der berechnete NTC-Widerstand (Ω) und der MCP4018-Schritt (0–127) angezeigt. |
-| FR-02.3 | In der oberen Statusleiste werden WiFi-Status und Batterie-Icon angezeigt. |
-| FR-02.4 | In der unteren Leiste werden Hinweise auf die Tastenbelegung angezeigt. |
+| FR-02.1 | Der Hauptscreen zeigt die aktuelle Simulationstemperatur in großer weißer Monospace-Schrift zentriert. Die Einheit „°C" wird in Gelb daneben angezeigt. |
+| FR-02.2 | In der Info-Zeile (unten links) wird der berechnete NTC-Widerstand angezeigt (Gelb). Direkt daneben steht ein farbiger I²C-Statusblock (grün = OK, rot = Fehler) mit Beschriftung „I²C". |
+| FR-02.3 | Die Statusleiste (oben) enthält: piep design Logo + „TempSensorEmulator" (Gelb) links; WiFi-Balken + IP-Adresse mittig; Batterie-Icon + % rechts. |
+| FR-02.4 | Rechts oben (nahe dem physischen + Knopf): „Temp +" in Gelb, darunter „3.5s: AUS" in Weiß. Rechts unten (nahe dem physischen − Knopf): „Temp −" in Gelb, darunter „3.5s: WLAN" in Weiß. |
 | FR-02.5 | Der Screen wird nach jeder Temperaturänderung vollständig neu gezeichnet. |
-| FR-02.6 | Der I²C-Verbindungsstatus (OK / FEHLER) ist in der Statusleiste sichtbar. |
+| FR-02.6 | Der MCP4018-Schrittwert (0–127) wird nicht mehr auf dem Display angezeigt. |
 
 ### FR-03 — Temperaturregelung über Tasten
 
+Tasten-Auslösung erfolgt **beim Loslassen** (Release-Trigger), nicht beim Drücken.  
+Es gibt kein Auto-Repeat — pro Drück-/Loslass-Zyklus wird genau eine Aktion ausgeführt.
+
 | ID | Anforderung |
 |---|---|
-| FR-03.1 | Kurzer Druck (< 600 ms) auf BOOT reduziert die Temperatur um 0,5 °C. |
-| FR-03.2 | Kurzer Druck auf KEY erhöht die Temperatur um 0,5 °C. |
-| FR-03.3 | Halten der Taste > 600 ms aktiviert Auto-Repeat mit 130 ms Intervall. |
-| FR-03.3b | Auto-Repeat stoppt 300 ms vor der 3,5-s-Schwelle (Sonderfunktion). |
+| FR-03.1 | Taste BOOT drücken und loslassen vor 3,5 s: Temperatur um −0,5 °C ändern. |
+| FR-03.2 | Taste KEY drücken und loslassen vor 3,5 s: Temperatur um +0,5 °C ändern. |
+| FR-03.3 | Wird eine Taste ≥ 3,5 s gehalten und dann losgelassen, wird die Sonderfunktion ausgelöst — keine Temperaturänderung. |
 | FR-03.4 | Die Temperatur ist auf den Bereich −15,0 °C bis +30,0 °C begrenzt. |
 | FR-03.5 | Jede Temperaturänderung wird sofort an den MCP4018 übertragen. |
 | FR-03.6 | Jede Temperaturänderung wird in NVS gespeichert (max. alle 2 s, um Flash-Zyklen zu schonen). |
@@ -239,7 +241,7 @@ Interpolation linear zwischen Stützpunkten. Messung alle 10 s, gleitender Mitte
 
 | ID | Anforderung |
 |---|---|
-| FR-06.1 | Wird die KEY-Taste (+) länger als 3,5 Sekunden gehalten, wechselt das Gerät in den Deep Sleep. |
+| FR-06.1 | Wird die KEY-Taste (+) ≥ 3,5 Sekunden gehalten und losgelassen, wechselt das Gerät in den Deep Sleep. Während des Haltens erfolgt keine Temperaturänderung. |
 | FR-06.2 | Vor dem Einschlafen wird die Temperatur in NVS gespeichert. |
 | FR-06.3 | Das Display wird vor dem Einschlafen ausgeschaltet (Backlight aus, Power-Enable LOW). |
 | FR-06.4 | Das Gerät wacht durch Druck auf eine beliebige Taste auf (GPIO 0 oder GPIO 14 als Wakeup-Quelle). |
@@ -255,7 +257,7 @@ Interpolation linear zwischen Stützpunkten. Messung alle 10 s, gleitender Mitte
 | FR-07.2 | Icon-Stufen: 0–20 % (leer), 21–40 %, 41–60 %, 61–80 %, 81–100 % (voll). |
 | FR-07.3 | Wird das Gerät über USB geladen, erscheint ein Blitz-Symbol neben dem Batterie-Icon. |
 | FR-07.4 | Bei < 15 % SoC blinkt das Icon im Sekundentakt (rot). |
-| FR-07.5 | Bei < 5 % SoC erscheint eine Warnmeldung und das Gerät geht nach 5 Sekunden in Deep Sleep. |
+| FR-07.5 | Bei < 5 % SoC erscheint eine Warnmeldung und das Gerät geht nach 10 Sekunden in Deep Sleep. |
 
 ### FR-08 — WiFi-Verbindung
 
@@ -265,7 +267,7 @@ Implementierung über **WiFiManager** (Library: `tzapu/WiFiManager`).
 |---|---|
 | FR-08.1 | Beim Start verbindet sich das Gerät **still** mit dem gespeicherten Netz (Timeout: 10 s). Kein Portal, kein Blockieren. |
 | FR-08.2 | Sind keine Credentials vorhanden oder schlägt die Verbindung fehl, läuft das Gerät **offline** weiter. |
-| FR-08.3 | Das Captive Portal wird **nur auf Knopfdruck** gestartet: BOOT-Taste 3,5 s halten. |
+| FR-08.3 | Das Captive Portal wird **nur auf Knopfdruck** gestartet: BOOT-Taste ≥ 3,5 s halten und loslassen. |
 | FR-08.4 | AP-Parameter: SSID `CHA-Emulator`, Passwort `wolf1234`, IP `192.168.4.1`. |
 | FR-08.5 | Das Gerät zeigt während des AP-Modus den WiFi-Setup-Screen (§9.4) mit Verbindungsanleitung. |
 | FR-08.6 | Das Handy verbindet sich mit dem AP; der Browser öffnet automatisch das Captive Portal (wie Hotel-WLAN). |
@@ -405,78 +407,85 @@ Bibliothek: LovyanGFX
 ```
 ┌────────────────────────────────────────────────────────────────┐  y=0
 │                                                                 │
-│                   ┌───────────────────┐                        │
-│                   │  piep design Logo  │   260 × 158 px        │
-│                   │  (logo.png)        │   zentriert            │
-│                   └───────────────────┘                        │
-│                                                      v1.0.0    │  y=155
+│              ┌──────────────────────────────┐                  │
+│              │  piep design Logo (logo.png)  │  zentriert      │
+│              │  weiß auf schwarz             │  obere 60 %     │
+│              └──────────────────────────────┘                  │
+│                     TempSensorEmulator                         │  Gelb
+│                          v1.2.0                                │  Dunkelgrau
 └────────────────────────────────────────────────────────────────┘  y=170
 ```
 
-| Element | Font | Farbe | Position |
-|---|---|---|---|
-| Logo | Bild | — | zentriert |
-| Version | Font2 | Dunkelgrau | rechts unten (x=260, y=155) |
+| Element | Farbe | Position |
+|---|---|---|
+| Logo (logo.png, LittleFS) | Weiß auf Schwarz | zentriert, obere 60 % |
+| „TempSensorEmulator" | Gelb | zentriert, unterhalb Logo |
+| Firmware-Version | Dunkelgrau | zentriert, unter Titel |
 
 ### 9.2 Hauptscreen
 
 ```
 ┌────────────────────────────────────────────────────────────────┐  y=0
-│ Wolf CHA-07               I2C OK   ))) 192.168.1.42   🔋 78%  │  y=4
-├────────────────────────────────────────────────────────────────┤  y=20
+│ [Logo] TempSensorEmulator    ))) 192.168.1.42  🔋 78%  Temp + │  Statusleiste
+│                                                       3.5s:AUS │  y=26
+├────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│                         -5.5 °C                                │  y=35
-│                                                                 │
-├────────────────────────────────────────────────────────────────┤  y=120
-│    R = 22 237 Ω                        Schritt 57 / 127        │  y=134
-├────────────────────────────────────────────────────────────────┤  y=150
-│  < -  (3s:WLAN)                          (3s:AUS)  + >        │  y=155
+│                      -5.5 °C                                   │  groß, zentriert
+│                                                        Temp −  │
+│                                                       3.5s:WLAN│  y=148
+├────────────────────────────────────────────────────────────────┤
+│  R = 22 237 Ω  ■ I²C                                          │  y=148..158
+├────────────────────────────────────────────────────────────────┤
 └────────────────────────────────────────────────────────────────┘  y=170
 ```
 
-| Element | Font | Größe | Farbe |
-|---|---|---|---|
-| piep design Logo (klein) | Bild | — | links oben (28×16 px) |
-| I²C-Status | Font2 | 1 | Grün / Rot |
-| WiFi-Symbol + IP | Font2 | 1 | Weiß / Rot |
-| Batterie-Icon + % | Font2 | 1 | Weiß / Rot (< 15 %) |
-| Temperaturwert | Font7 | 1 | Weiß |
-| °C | Font4 | 1 | Cyan |
-| R = … Ω, Schritt … | Font2 | 1 | Gelb |
-| Tasten-Hint | Font2 | 1 | Dunkelgrau |
+| Element | Farbe | Anmerkung |
+|---|---|---|
+| Logo (klein, transparent) | Weiß | Links in Statusleiste |
+| „TempSensorEmulator" | Gelb | Rechts neben Logo |
+| WiFi-Balken + IP | Weiß | Statusleiste Mitte |
+| Batterie-Icon + % | Weiß / Rot (< 15 %) | Statusleiste rechts |
+| „Temp +" / „3.5s: AUS" | Gelb / Weiß | Ganz rechts oben (phys. + Knopf) |
+| Temperaturwert | Weiß | Groß, zentriert |
+| „°C" | Gelb | Proportional zur Temperaturschrift |
+| „Temp −" / „3.5s: WLAN" | Gelb / Weiß | Ganz rechts unten (phys. − Knopf) |
+| „R = … Ω" | Gelb | Info-Zeile links |
+| I²C-Statusblock + „I²C" | Grün/Rot + Gelb | Direkt rechts neben R-Wert |
 
 ### 9.3 Shutdown-Screen (vor Deep Sleep)
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│  ⚠  Gerät wird ausgeschaltet  ⚠                               │
-│  ──────────────────────────────────────────────────────────── │
-│  Letzte Temperatur:  −5.5 °C                                  │
-│  Wert gespeichert — wird beim nächsten Start wiederhergestellt │
-│  ──────────────────────────────────────────────────────────── │
-│  Bitte echten Fühler wieder an Heizung anschliessen!          │
-│                                          Ausschalten in  2 s… │
+┌────────────────────────────────────────────────────────────────┐  gelber Rahmen
+│ [Logo] TempSensorEmulator                                      │
+│  ─────────────────────────────────────────────────────────── │
+│              Gerät wird ausgeschaltet                          │  Gelb
+│  ─────────────────────────────────────────────────────────── │
+│         Letzte Temperatur:  −5.5 °C                           │  Grau
+│    Wert gespeichert — wird beim nächsten Start wiederhergest.  │  Grau
+│  ─────────────────────────────────────────────────────────── │
+│            Bitte echten Fühler wieder                          │  Gelb
+│              an Heizung anschliessen!                          │  Gelb
+│                    Ausschalten in  10 s …                      │  Dunkelgrau
 └────────────────────────────────────────────────────────────────┘
 ```
 
-Anzeige für 2 Sekunden, dann Deep Sleep.
+Anzeige für 10 Sekunden (Countdown sichtbar), dann Deep Sleep.
 
 ### 9.4 WiFi-Setup-Screen (Captive Portal aktiv)
 
 Wird angezeigt, solange WiFiManager im AP-Modus auf Konfiguration wartet.
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│  WiFi-Konfiguration                                            │
-│  ──────────────────────────────────────────────────────────── │
-│                                                                 │
+┌────────────────────────────────────────────────────────────────┐  blauer Rahmen
+│ [Logo] TempSensorEmulator                                      │
+│  ─────────────────────────────────────────────────────────── │
 │  ))) AP:  CHA-Emulator                                        │
 │      PW:  wolf1234                                            │
-│                                                                 │
+│  ─────────────────────────────────────────────────────────── │
 │  1. Handy mit "CHA-Emulator" verbinden                        │
 │  2. Browser öffnet sich automatisch                           │
 │  3. Heimnetz wählen + Passwort eingeben                       │
-│                                                                 │
+│                    Warte auf Verbindung …                      │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -507,7 +516,7 @@ Inhalte:
   "charging":    false,
   "wifi_ssid":   "MeinNetz",
   "ip":          "192.168.1.42",
-  "fw_version":  "v1.1.0",
+  "fw_version":  "v1.2.0",
   "uptime_s":    3600
 }
 ```
@@ -607,8 +616,10 @@ Ergebnis in `ntc.h` als `NTC_B` eintragen.
 | Nr. | Punkt | Priorität | Status |
 |---|---|---|---|
 | OP-01 | Wolf NTC B-Wert messtechnisch verifizieren | Hoch | Offen |
-| OP-02 | WiFi-Ersteinrichtung | — | **Entschieden: on-demand via BOOT 3,5 s** |
+| OP-02 | WiFi-Ersteinrichtung | — | **Entschieden: on-demand via BOOT ≥ 3,5 s + Loslassen** |
 | OP-02b | Laden-Erkennung: GPIO-Pin des Lader-IC prüfen (falls vorhanden) | Mittel | Offen |
 | OP-03 | Display-Ausrichtung festlegen (USB-C nach oben oder unten) | Niedrig | Offen |
 | OP-04 | Gehäuse / Halterung | Niedrig | Nicht spezifiziert |
 | OP-05 | OTA-Passwortschutz (aktuell ohne Passwort) | Niedrig | Bewusst offen |
+| OP-06 | Tasten-Verhalten Option B testen (Release-Trigger, kein Auto-Repeat) | Mittel | Test ausstehend |
+| OP-07 | Shutdown-Countdown (10 s) in Firmware implementieren und anzeigen | Mittel | Offen |

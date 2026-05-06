@@ -1,5 +1,5 @@
 // Wolf CHA-07 Aussenfuhler-Emulator  —  main.cpp
-// piep design · v1.2.0
+// piep design · v1.3.0
 
 #include <Arduino.h>
 #include "config.h"
@@ -14,54 +14,44 @@
 static float g_tempC        = TEMP_DEFAULT;
 static bool  g_displayDirty = true;
 
-// ── Button-Handling ───────────────────────────────────────────
+// ── Button-Handling (Option B: Auslösung beim Loslassen) ──────
+enum BtnEvent { BTN_NONE, BTN_SHORT, BTN_LONG };
+
 struct Button {
     uint8_t  pin;
-    uint32_t pressedAt;
-    uint32_t lastRepeat;
-    bool     edgeFired;
-    bool     longFired;    // Sonderfunktion bereits ausgelöst
+    uint32_t pressedAt;   // millis() beim Drücken (0 = nicht gedrückt)
+    bool     prevPressed;
 };
 
-static Button btnMinus{ PIN_BTN_MINUS, 0, 0, false, false };
-static Button btnPlus { PIN_BTN_PLUS,  0, 0, false, false };
+static Button btnMinus{ PIN_BTN_MINUS, 0, false };
+static Button btnPlus { PIN_BTN_PLUS,  0, false };
 
-// Gibt delta zurück (+/- TEMP_STEP oder 0).
-// Auto-Repeat stoppt 300 ms vor Ablauf der Sonderfunktion.
-static float pollButton(Button& b, float delta) {
+// Erkennt Kurzdruck (<BTN_ACTION_MS) und Langdruck (>=BTN_ACTION_MS) beim Loslassen.
+// Kein Auto-Repeat — eine Aktion pro Tastenbetätigung.
+static BtnEvent pollButton(Button& b) {
     bool pressed = (digitalRead(b.pin) == LOW);
-    uint32_t now = millis();
 
-    if (!pressed) {
-        b.pressedAt = 0; b.edgeFired = false; b.longFired = false;
-        return 0;
+    if (pressed && !b.prevPressed) {
+        b.pressedAt = millis();
+    } else if (!pressed && b.prevPressed && b.pressedAt) {
+        uint32_t held = millis() - b.pressedAt;
+        b.pressedAt = 0;
+        b.prevPressed = false;
+        return (held >= BTN_ACTION_MS) ? BTN_LONG : BTN_SHORT;
     }
-    if (!b.pressedAt) { b.pressedAt = now; b.lastRepeat = now; }
 
-    uint32_t held = now - b.pressedAt;
-
-    if (!b.edgeFired) { b.edgeFired = true; return delta; }
-
-    if (!b.longFired &&
-        held > BTN_HOLD_MS &&
-        held < BTN_ACTION_MS - 300 &&
-        now - b.lastRepeat > BTN_REPEAT_MS) {
-        b.lastRepeat = now;
-        return delta;
-    }
-    return 0;
+    b.prevPressed = pressed;
+    return BTN_NONE;
 }
 
 // ── Sonderfunktionen ──────────────────────────────────────────
 
-static void checkSleepTrigger() {
-    if (digitalRead(PIN_BTN_PLUS) != LOW || btnPlus.longFired || !btnPlus.pressedAt) return;
-    if (millis() - btnPlus.pressedAt < SLEEP_HOLD_MS) return;
-
-    btnPlus.longFired = true;
+static void doSleep() {
     prefsFlush();
-    drawShutdown(g_tempC);
-    delay(2000);
+    for (int s = SHUTDOWN_COUNTDOWN_S; s >= 0; s--) {
+        drawShutdown(g_tempC, s);
+        if (s > 0) delay(1000);
+    }
     displayBrightness(0);
     digitalWrite(PIN_POWER_ON, LOW);
     esp_sleep_enable_ext1_wakeup(
@@ -70,11 +60,7 @@ static void checkSleepTrigger() {
     esp_deep_sleep_start();
 }
 
-static void checkWifiTrigger() {
-    if (digitalRead(PIN_BTN_MINUS) != LOW || btnMinus.longFired || !btnMinus.pressedAt) return;
-    if (millis() - btnMinus.pressedAt < WIFI_TRIGGER_MS) return;
-
-    btnMinus.longFired = true;
+static void doWifi() {
     wifiStartPortal();
     g_displayDirty = true;
 }
@@ -119,20 +105,24 @@ void setup() {
         Serial.printf("  %+3d°C → %.0fΩ → Step %d\n",
                       t, ntcOhm(t), ntcToStep(t));
 
-    Serial.println("BOOT 3.5s = WLAN  |  KEY 3.5s = Sleep");
+    Serial.println("BOOT loslassen <3.5s = -0.5°C  |  KEY loslassen <3.5s = +0.5°C");
+    Serial.println("BOOT >=3.5s loslassen = WLAN   |  KEY >=3.5s loslassen = Sleep");
 }
 
 // ── Loop ──────────────────────────────────────────────────────
 void loop() {
-    float d = pollButton(btnMinus, -TEMP_STEP)
-            + pollButton(btnPlus,  +TEMP_STEP);
-    if (d != 0) {
+    BtnEvent evMinus = pollButton(btnMinus);
+    BtnEvent evPlus  = pollButton(btnPlus);
+
+    if (evMinus == BTN_SHORT || evPlus == BTN_SHORT) {
+        float d = (evMinus == BTN_SHORT ? -TEMP_STEP : 0.0f)
+                + (evPlus  == BTN_SHORT ? +TEMP_STEP : 0.0f);
         float t = constrain(g_tempC + d, TEMP_MIN, TEMP_MAX);
         if (t != g_tempC) applyTemp(t);
     }
 
-    checkSleepTrigger();
-    checkWifiTrigger();
+    if (evMinus == BTN_LONG) doWifi();
+    if (evPlus  == BTN_LONG) doSleep();
 
     static uint32_t lastBat = 0;
     if (millis() - lastBat > BAT_UPDATE_MS) {
@@ -143,7 +133,7 @@ void loop() {
         if (batteryPercent() <= BAT_CRIT_PCT) {
             Serial.println("Akku kritisch — Deep Sleep");
             prefsFlush();
-            drawShutdown(g_tempC);
+            drawShutdown(g_tempC, 3);
             delay(3000);
             displayBrightness(0);
             digitalWrite(PIN_POWER_ON, LOW);
@@ -156,7 +146,7 @@ void loop() {
 
     if (g_displayDirty) {
         String ip = wifiIP();
-        drawMain(g_tempC, ntcOhm(g_tempC), ntcToStep(g_tempC),
+        drawMain(g_tempC, ntcOhm(g_tempC),
                  batteryPercent(), batteryCharging(),
                  ip.c_str(), mcp4018IsOk());
         g_displayDirty = false;

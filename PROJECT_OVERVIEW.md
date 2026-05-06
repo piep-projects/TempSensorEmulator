@@ -66,11 +66,11 @@ Das Gerät hat vier Display-Zustände (Mockups in `mockups/`):
 |---|---|
 | **Splash-Screen** | piep design Logo (weiß) + Firmware-Version beim Start |
 | **Temperaturanzeige** | −15 °C bis +30 °C, große Anzeige, Schritte 0,5 °C |
-| **Tastensteuerung** | BOOT = −0,5 °C · KEY = +0,5 °C · Halten = schnell |
-| **Deep Sleep** | Beide Tasten 2 s → Stromsparmodus; Taste → Aufwachen |
-| **Batterieanzeige** | Ladestand in % + 5-stufiges Icon; Blitz beim Laden |
-| **Warnung** | < 15 % blinkend rot; < 5 % → automatisch Sleep |
-| **WiFi** | WiFiManager Captive Portal — Browser öffnet sich automatisch |
+| **Tastensteuerung** | BOOT = −0,5 °C · KEY = +0,5 °C · Halten = schnell (Auto-Repeat) |
+| **Deep Sleep** | KEY 3,5 s halten → Stromsparmodus; beliebige Taste → Aufwachen |
+| **WiFi on Demand** | BOOT 3,5 s halten → Captive Portal; beim Start nur stilles Reconnect |
+| **Batterieanzeige** | Ladestand in % + Icon; Blitz beim Laden |
+| **Warnung** | < 15 % rot; < 5 % → automatisch Sleep |
 | **Web-Interface** | Temperatur vom Handy/PC einstellen, Status, WLAN-Config |
 | **OTA-Update** | Firmware drahtlos über Browser (`/update`) einspielen |
 | **NVS-Speicher** | Temperatur + WLAN-Daten bleiben nach Neustart erhalten |
@@ -107,20 +107,21 @@ pio device monitor
 
 ### 3. WLAN einrichten — WiFiManager Captive Portal
 
-Beim ersten Start (kein WLAN konfiguriert) öffnet das Gerät automatisch einen Hotspot:
+Das WLAN-Portal wird **auf Knopfdruck** gestartet (nicht automatisch beim Boot):
 
 | Parameter | Wert |
 |---|---|
+| Auslöser | BOOT-Taste **3,5 s** halten |
 | SSID | `CHA-Emulator` |
 | Passwort | `wolf1234` |
 
 **Ablauf:**
-1. Handy mit `CHA-Emulator` verbinden
-2. Browser öffnet sich **automatisch** (Captive Portal, wie Hotel-WLAN)
-3. Heimnetz aus der Liste wählen + Passwort eingeben
-4. Gerät speichert die Daten und startet neu — verbindet sich ab jetzt automatisch
+1. BOOT-Taste 3,5 s halten → Display wechselt auf WiFi-Setup-Screen
+2. Handy mit `CHA-Emulator` verbinden
+3. Browser öffnet sich **automatisch** (Captive Portal, wie Hotel-WLAN)
+4. Heimnetz aus der Liste wählen + Passwort eingeben → Gerät verbindet sich
 
-Das Display zeigt während der Einrichtung den WiFi-Setup-Screen mit der Schritt-für-Schritt-Anleitung.
+Beim nächsten Start verbindet sich das Gerät **still** mit dem gespeicherten Netz (kein Blockieren, kein Portal).
 
 ### 4. Temperatur einstellen
 
@@ -211,6 +212,7 @@ TempSensorEmulator/
 |---|---|---|
 | 1.0.0 | 2026-05-06 | Initiale Implementierung — Grundfunktion (NTC-Emulation, Display, Tasten) |
 | 1.1.0 | 2026-05-06 | Batterie, Deep Sleep, WiFiManager Captive Portal, Web-Interface, OTA |
+| 1.2.0 | 2026-05-06 | WiFi optional (on-demand via BOOT 3,5 s); KEY 3,5 s = Sleep; LittleFS-Fix |
 
 ---
 

@@ -9,7 +9,7 @@
 | Autor | piep design |
 | Datum | 2026-05-06 |
 | Hardware | LilyGo T-Display-S3 · MCP4018T-503 · LiPo 700 mAh |
-| Firmware | v1.1.0 (geplant) |
+| Firmware | v1.2.0 |
 
 ---
 
@@ -189,7 +189,7 @@ Interpolation linear zwischen Stützpunkten. Messung alle 10 s, gleitender Mitte
 | FR-01.1 | Nach dem Einschalten oder Aufwachen aus Deep Sleep zeigt das Gerät den Splash-Screen. |
 | FR-01.2 | Der Splash-Screen enthält das piep design Logo (aus LittleFS) zentriert auf schwarzem Hintergrund. |
 | FR-01.3 | Die Firmware-Version (`vMAJOR.MINOR.PATCH`) wird unten rechts im Splash-Screen angezeigt. |
-| FR-01.4 | Der Splash-Screen bleibt 2,0 Sekunden sichtbar. |
+| FR-01.4 | Der Splash-Screen bleibt 1,5 Sekunden sichtbar. |
 | FR-01.5 | Nach Ablauf der 2 Sekunden wechselt das Gerät selbstständig in den Hauptscreen. |
 | FR-01.6 | Beim ersten Start ohne NVS-Daten wird als Starttemperatur +10,0 °C verwendet. |
 | FR-01.7 | War ein Wert in NVS gespeichert, wird dieser unmittelbar nach dem Start an den MCP4018 übertragen — noch während des Splash-Screens. |
@@ -212,6 +212,7 @@ Interpolation linear zwischen Stützpunkten. Messung alle 10 s, gleitender Mitte
 | FR-03.1 | Kurzer Druck (< 600 ms) auf BOOT reduziert die Temperatur um 0,5 °C. |
 | FR-03.2 | Kurzer Druck auf KEY erhöht die Temperatur um 0,5 °C. |
 | FR-03.3 | Halten der Taste > 600 ms aktiviert Auto-Repeat mit 130 ms Intervall. |
+| FR-03.3b | Auto-Repeat stoppt 300 ms vor der 3,5-s-Schwelle (Sonderfunktion). |
 | FR-03.4 | Die Temperatur ist auf den Bereich −15,0 °C bis +30,0 °C begrenzt. |
 | FR-03.5 | Jede Temperaturänderung wird sofort an den MCP4018 übertragen. |
 | FR-03.6 | Jede Temperaturänderung wird in NVS gespeichert (max. alle 2 s, um Flash-Zyklen zu schonen). |
@@ -238,7 +239,7 @@ Interpolation linear zwischen Stützpunkten. Messung alle 10 s, gleitender Mitte
 
 | ID | Anforderung |
 |---|---|
-| FR-06.1 | Werden beide Tasten (BOOT + KEY) gleichzeitig länger als 2,0 Sekunden gehalten, wechselt das Gerät in den Deep Sleep. |
+| FR-06.1 | Wird die KEY-Taste (+) länger als 3,5 Sekunden gehalten, wechselt das Gerät in den Deep Sleep. |
 | FR-06.2 | Vor dem Einschlafen wird die Temperatur in NVS gespeichert. |
 | FR-06.3 | Das Display wird vor dem Einschlafen ausgeschaltet (Backlight aus, Power-Enable LOW). |
 | FR-06.4 | Das Gerät wacht durch Druck auf eine beliebige Taste auf (GPIO 0 oder GPIO 14 als Wakeup-Quelle). |
@@ -262,14 +263,15 @@ Implementierung über **WiFiManager** (Library: `tzapu/WiFiManager`).
 
 | ID | Anforderung |
 |---|---|
-| FR-08.1 | Beim Start versucht WiFiManager, mit den zuletzt gespeicherten Zugangsdaten zu verbinden (Timeout: 10 s). |
-| FR-08.2 | Sind keine Daten vorhanden oder schlägt die Verbindung fehl, öffnet WiFiManager automatisch einen Captive-Portal-AP. |
-| FR-08.3 | AP-Parameter: SSID `CHA-Emulator`, Passwort `wolf1234`, IP `192.168.4.1`. |
-| FR-08.4 | Das Gerät zeigt während des AP-Modus den WiFi-Setup-Screen (§9.4) mit Verbindungsanleitung. |
-| FR-08.5 | Das Handy verbindet sich mit dem AP; der Browser öffnet automatisch das Captive Portal (wie Hotel-WLAN). |
-| FR-08.6 | Der Nutzer wählt sein Heimnetz aus der Liste und gibt das Passwort ein; WiFiManager speichert die Daten und startet neu. |
-| FR-08.7 | Nach erfolgreicher Verbindung zeigt die Statusleiste die zugewiesene IP-Adresse. |
-| FR-08.8 | Im Deep Sleep wird das WiFi-Modul abgeschaltet. |
+| FR-08.1 | Beim Start verbindet sich das Gerät **still** mit dem gespeicherten Netz (Timeout: 10 s). Kein Portal, kein Blockieren. |
+| FR-08.2 | Sind keine Credentials vorhanden oder schlägt die Verbindung fehl, läuft das Gerät **offline** weiter. |
+| FR-08.3 | Das Captive Portal wird **nur auf Knopfdruck** gestartet: BOOT-Taste 3,5 s halten. |
+| FR-08.4 | AP-Parameter: SSID `CHA-Emulator`, Passwort `wolf1234`, IP `192.168.4.1`. |
+| FR-08.5 | Das Gerät zeigt während des AP-Modus den WiFi-Setup-Screen (§9.4) mit Verbindungsanleitung. |
+| FR-08.6 | Das Handy verbindet sich mit dem AP; der Browser öffnet automatisch das Captive Portal (wie Hotel-WLAN). |
+| FR-08.7 | Der Nutzer wählt sein Heimnetz; WiFiManager speichert die Daten; Webserver startet. |
+| FR-08.8 | Nach erfolgreicher Verbindung zeigt die Statusleiste die zugewiesene IP-Adresse. |
+| FR-08.9 | Im Deep Sleep wird das WiFi-Modul abgeschaltet. |
 
 ### FR-09 — Web-Interface
 
@@ -356,7 +358,7 @@ lib_deps =
     lovyan03/LovyanGFX @ ^1.1.16
     tzapu/WiFiManager @ ^2.0.17
     ayushsharma82/ElegantOTA @ ^3.1.0
-    arduino-libraries/ArduinoJson @ ^7.0.0
+    bblanchon/ArduinoJson @ ^7.0.0
 ```
 
 LittleFS und NVS sind Teil des ESP32-Arduino-Frameworks (keine externe Abhängigkeit).
@@ -370,15 +372,15 @@ LittleFS und NVS sind Teil des ESP32-Arduino-Frameworks (keine externe Abhängig
                │
                ▼
          ┌──────────┐
-         │  SPLASH  │ 2 s
+         │  SPLASH  │ 1,5 s
          └────┬─────┘
               │ automatisch
               ▼
-         ┌──────────┐   WiFi-Verbindung ──► ┌──────────────┐
-         │   MAIN   │◄────────────────────── │  WIFI_SETUP  │
-         │  (STA)   │   Fehler / kein WLAN   │   (AP-Modus) │
-         └────┬─────┘                        └──────────────┘
-              │ beide Tasten 2 s
+         ┌──────────┐   BOOT 3,5 s ──► ┌──────────────┐
+         │   MAIN   │◄────────────────── │  WIFI_SETUP  │
+         │          │   nach Portal      │   (AP-Modus) │
+         └────┬─────┘                   └──────────────┘
+              │ KEY 3,5 s
               │ oder SoC < 5 %
               ▼
          ┌──────────┐
@@ -428,13 +430,13 @@ Bibliothek: LovyanGFX
 ├────────────────────────────────────────────────────────────────┤  y=120
 │    R = 22 237 Ω                        Schritt 57 / 127        │  y=134
 ├────────────────────────────────────────────────────────────────┤  y=150
-│  BOOT ▼  (−)                                    (+)  ▲ KEY    │  y=155
+│  < -  (3s:WLAN)                          (3s:AUS)  + >        │  y=155
 └────────────────────────────────────────────────────────────────┘  y=170
 ```
 
 | Element | Font | Größe | Farbe |
 |---|---|---|---|
-| Titel „Wolf CHA-07" | Font2 | 1 | Dunkelgrau |
+| piep design Logo (klein) | Bild | — | links oben (28×16 px) |
 | I²C-Status | Font2 | 1 | Grün / Rot |
 | WiFi-Symbol + IP | Font2 | 1 | Weiß / Rot |
 | Batterie-Icon + % | Font2 | 1 | Weiß / Rot (< 15 %) |
@@ -565,7 +567,7 @@ Inhalte:
 |---|---|---|
 | MCP4018 nicht erreichbar | I²C EndTransmission ≠ 0 | Rote Statusanzeige; 3 Retries; weiter laufen |
 | LittleFS mount fehlt | `LittleFS.begin()` false | Splash ohne Logo; Text-Fallback |
-| WiFi-Verbindung fehlgeschlagen | 10-s-Timeout | AP-Modus starten |
+| WiFi-Verbindung fehlgeschlagen | 10-s-Timeout | Offline-Betrieb; Portal per BOOT 3,5 s |
 | Temperatur außerhalb Bereich (Web) | Validierung in `/set` | HTTP 400 |
 | Akku kritisch (< 5 %) | SoC-Berechnung | Shutdown-Screen, dann Deep Sleep |
 | NVS leer | `nvs_get` not found | Standardwerte verwenden |
@@ -605,7 +607,7 @@ Ergebnis in `ntc.h` als `NTC_B` eintragen.
 | Nr. | Punkt | Priorität | Status |
 |---|---|---|---|
 | OP-01 | Wolf NTC B-Wert messtechnisch verifizieren | Hoch | Offen |
-| OP-02 | WiFi-Ersteinrichtung | — | **Entschieden: WiFiManager Captive Portal** |
+| OP-02 | WiFi-Ersteinrichtung | — | **Entschieden: on-demand via BOOT 3,5 s** |
 | OP-02b | Laden-Erkennung: GPIO-Pin des Lader-IC prüfen (falls vorhanden) | Mittel | Offen |
 | OP-03 | Display-Ausrichtung festlegen (USB-C nach oben oder unten) | Niedrig | Offen |
 | OP-04 | Gehäuse / Halterung | Niedrig | Nicht spezifiziert |

@@ -2,7 +2,7 @@
 
 > **Hinweis:** Dieses Dokument ist die Planungsgrundlage. Die verbindliche Spezifikation steht in [FDS.md](FDS.md).
 
-Version: 1.1  
+Version: 1.3  
 Hardware: LilyGo T-Display-S3 · MCP4018T-503 (50 kΩ) · LiPo 700 mAh
 
 ---
@@ -175,8 +175,8 @@ mockups/
 
 ## 8. Firmware-Versionsschema
 
-`MAJOR.MINOR.PATCH` — z. B. `v1.0.0`  
-Definiert als `#define FW_VERSION "v1.0.0"` in `main.cpp`.
+`MAJOR.MINOR.PATCH` — z. B. `v1.3.0`  
+Definiert als `#define FW_VERSION "v1.3.0"` in `config.h`.
 
 ---
 
@@ -188,6 +188,6 @@ Definiert als `#define FW_VERSION "v1.0.0"` in `main.cpp`.
 | WiFi-Ersteinrichtung | ✅ WiFiManager Captive Portal |
 | Display-Screens | ✅ 4 Screens: Splash, Main, WiFi-Setup, Shutdown |
 | Logo auf Display | ✅ weiß auf schwarz; klein in Statusleiste (Main) |
-| Temperaturanzeige | ✅ große Mono-Schrift, °C in Cyan |
-| Display-Ausrichtung (USB oben/unten) | offen |
+| Temperaturanzeige | ✅ große Mono-Schrift, °C in Gelb |
+| Display-Ausrichtung (USB oben/unten) | offen — nicht festgelegt |
 | Gehäuse / Halterung | nicht spezifiziert |

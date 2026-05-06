@@ -4,12 +4,12 @@
 | Feld | Wert |
 |---|---|
 | Dokument | FDS-TempSensorEmulator |
-| Version | 1.3 |
-| Status | In Bearbeitung |
+| Version | 1.4 |
+| Status | Freigegeben |
 | Autor | piep design |
 | Datum | 2026-05-06 |
 | Hardware | LilyGo T-Display-S3 · MCP4018T-503 · LiPo 700 mAh |
-| Firmware | v1.2.0 |
+| Firmware | v1.3.0 |
 
 ---
 
@@ -40,7 +40,7 @@ Dieses Dokument beschreibt die vollständige funktionale Spezifikation des Wolf 
 
 ### 1.2 Geltungsbereich
 
-Das Dokument gilt für Firmware-Version 1.1.0 und die zugehörige Hardware-Revision 1.0.
+Das Dokument gilt für Firmware-Version v1.3.0 und die zugehörige Hardware-Revision 1.0.
 
 ### 1.3 Zweck des Geräts
 
@@ -407,20 +407,20 @@ Bibliothek: LovyanGFX
 ```
 ┌────────────────────────────────────────────────────────────────┐  y=0
 │                                                                 │
-│              ┌──────────────────────────────┐                  │
-│              │  piep design Logo (logo.png)  │  zentriert      │
-│              │  weiß auf schwarz             │  obere 60 %     │
-│              └──────────────────────────────┘                  │
-│                     TempSensorEmulator                         │  Gelb
-│                          v1.2.0                                │  Dunkelgrau
+│                   ┌──────────────┐                             │
+│                   │  piep  Logo  │  x=100, y=8, 120×73 px     │
+│                   │  weiß/schwarz│  (scale 0.46 aus 260×158)  │
+│                   └──────────────┘                             │
+│                   TempSensorEmulator                           │  Gelb, y=92
+│                        v1.3.0                                  │  Dunkelgrau, y=112
 └────────────────────────────────────────────────────────────────┘  y=170
 ```
 
 | Element | Farbe | Position |
 |---|---|---|
-| Logo (logo.png, LittleFS) | Weiß auf Schwarz | zentriert, obere 60 % |
-| „TempSensorEmulator" | Gelb | zentriert, unterhalb Logo |
-| Firmware-Version | Dunkelgrau | zentriert, unter Titel |
+| Logo (logo.png, LittleFS) | Weiß auf Schwarz | x=100, y=8, 120×73 px (scale 0.46) |
+| „TempSensorEmulator" | Gelb | zentriert, y=92 |
+| Firmware-Version | Dunkelgrau | zentriert, y=112 |
 
 ### 9.2 Hauptscreen
 
@@ -461,7 +461,7 @@ Bibliothek: LovyanGFX
 │              Gerät wird ausgeschaltet                          │  Gelb
 │  ─────────────────────────────────────────────────────────── │
 │         Letzte Temperatur:  −5.5 °C                           │  Grau
-│    Wert gespeichert — wird beim nächsten Start wiederhergest.  │  Grau
+│                  Wert gespeichert.                             │  Grau
 │  ─────────────────────────────────────────────────────────── │
 │            Bitte echten Fühler wieder                          │  Gelb
 │              an Heizung anschliessen!                          │  Gelb
@@ -621,5 +621,5 @@ Ergebnis in `ntc.h` als `NTC_B` eintragen.
 | OP-03 | Display-Ausrichtung festlegen (USB-C nach oben oder unten) | Niedrig | Offen |
 | OP-04 | Gehäuse / Halterung | Niedrig | Nicht spezifiziert |
 | OP-05 | OTA-Passwortschutz (aktuell ohne Passwort) | Niedrig | Bewusst offen |
-| OP-06 | Tasten-Verhalten Option B testen (Release-Trigger, kein Auto-Repeat) | Mittel | Test ausstehend |
-| OP-07 | Shutdown-Countdown (10 s) in Firmware implementieren und anzeigen | Mittel | Offen |
+| OP-06 | Tasten-Verhalten Option B testen (Release-Trigger, kein Auto-Repeat) | Mittel | ✅ Erledigt v1.3.0 |
+| OP-07 | Shutdown-Countdown (10 s) in Firmware implementieren und anzeigen | Mittel | ✅ Erledigt v1.3.0 |

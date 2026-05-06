@@ -125,7 +125,7 @@ Beim nächsten Start verbindet sich das Gerät **still** mit dem gespeicherten N
 
 ### 4. Temperatur einstellen
 
-- **Am Gerät:** BOOT-Taste (−) oder KEY-Taste (+), halten für schnellen Lauf
+- **Am Gerät:** BOOT kurz drücken und loslassen = −0,5 °C · KEY kurz drücken und loslassen = +0,5 °C
 - **Im Browser:** `http://<IP-Adresse>` → Temperatur per Webseite einstellen
 
 ### 5. OTA-Firmware-Update
@@ -154,7 +154,7 @@ TempSensorEmulator/
 │   ├── screen_wifi_setup.png # WiFi-Setup-Screen Mockup
 │   └── screen_shutdown.png   # Shutdown-Screen Mockup
 ├── datasheets/
-│   ├── piep-design1.png      # Logo-Quelle (Original)
+│   ├── piep-logo-projects1.png  # Logo-Quelle (Original)
 │   ├── DIGIPOT-10K-MCP4018.pdf
 │   └── SOLDERED_MCP4018_DATASHEET.pdf
 ├── tools/
@@ -214,6 +214,7 @@ TempSensorEmulator/
 | 1.1.0 | 2026-05-06 | Batterie, Deep Sleep, WiFiManager Captive Portal, Web-Interface, OTA |
 | 1.2.0 | 2026-05-06 | WiFi optional (on-demand via BOOT 3,5 s); KEY 3,5 s = Sleep; LittleFS-Fix |
 | 1.3.0 | 2026-05-06 | Neues Logo (piep-logo-projects1); überarbeitetes Display-Design (gelbe Farbgebung, Knopf-Beschriftung); Release-Trigger-Tasten (kein Auto-Repeat); Shutdown-Countdown 10 s |
+| 1.3.1 | 2026-05-06 | Splash-Logo-Bug behoben (LovyanGFX drawPng-Upscale-Artefakt); Mockup-Generator neu kalibriert (exakte Font-Metriken + Koordinaten) |
 
 ---
 

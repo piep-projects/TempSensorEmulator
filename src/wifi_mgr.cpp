@@ -181,6 +181,8 @@ void wifiStartPortal() {
         g_connected = true;
         g_ip = WiFi.localIP().toString();
         Serial.printf("WiFi verbunden: %s\n", g_ip.c_str());
+        drawWifiSetup(g_ip.c_str());   // zeigt IP kurz auf dem WiFi-Screen
+        delay(1500);
         if (!g_srvStarted) serverSetup();
     } else {
         g_connected = false;

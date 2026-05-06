@@ -143,10 +143,25 @@ void displayBrightness(uint8_t val) {
 void drawSplash() {
     tft.fillScreen(COL_BG);
 
-    // Logo in oberer Hälfte zentriert
-    drawLogo(10, 5, 300, 80);
+    // Logo: explizite Skalierung 0.46 → 260×158 wird zu 120×73 px
+    // maxW/maxH nicht verwendet, da maxW > PNG-Breite LovyanGFX zum
+    // Hochskalieren veranlasst und das Logo den Text überdeckt.
+    {
+        File f = LittleFS.open("/logo.png");
+        if (f) {
+            size_t sz = f.size();
+            uint8_t* buf = (uint8_t*)malloc(sz);
+            if (buf) {
+                f.read(buf, sz);
+                // Zentriert: x = (320-120)/2 = 100, y=8, Unterrand y≈81
+                tft.drawPng(buf, sz, 100, 8, 0, 0, 0, 0, 0.46f, 0.46f);
+                free(buf);
+            }
+            f.close();
+        }
+    }
 
-    // "TempSensorEmulator" in Gelb
+    // "TempSensorEmulator" in Gelb (11 px Abstand zum Logo-Unterrand)
     tft.setFont(&fonts::Font4);
     tft.setTextSize(1);
     tft.setTextColor(COL_YELLOW);

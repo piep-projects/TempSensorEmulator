@@ -170,12 +170,15 @@ TempSensorEmulator/
 
 ## Bibliotheken (PlatformIO)
 
-| Bibliothek | Version | Zweck |
-|---|---|---|
-| LovyanGFX | ^1.1.16 | Display-Treiber (ST7789, 8080-Bus) |
-| WiFiManager | ^2.0.17 | WLAN-Konfiguration, Captive Portal |
-| ElegantOTA | ^3.1.0 | OTA-Firmware-Update über Browser |
-| ArduinoJson | ^7.0.0 | JSON für `/status`-Endpunkt |
+| Bibliothek | PlatformIO-ID | Version | Zweck |
+|---|---|---|---|
+| LovyanGFX | `lovyan03/LovyanGFX` | ^1.1.16 | Display-Treiber (ST7789, 8080-Bus) |
+| WiFiManager | `tzapu/WiFiManager` | ^2.0.17 | WLAN-Konfiguration, Captive Portal |
+| ElegantOTA | `ayushsharma82/ElegantOTA` | ^3.1.0 | OTA-Firmware-Update über Browser |
+| ArduinoJson | `bblanchon/ArduinoJson` | ^7.0.0 | JSON für `/status`-Endpunkt |
+
+> **Hinweis:** PNG-Dateien aus LittleFS werden per `malloc`/`drawPng()` geladen (kompatibel mit LovyanGFX ≥ 1.2.x).  
+> Das T-Display-S3 hat 16 MB Flash — `board_upload.flash_size = 16MB` muss in `platformio.ini` gesetzt sein, da PlatformIO standardmäßig 8 MB annimmt.
 
 ---
 
@@ -207,7 +210,7 @@ TempSensorEmulator/
 | Version | Datum | Änderungen |
 |---|---|---|
 | 1.0.0 | 2026-05-06 | Initiale Implementierung — Grundfunktion (NTC-Emulation, Display, Tasten) |
-| 1.1.0 | — | Batterie, Deep Sleep, WiFiManager Captive Portal, Web-Interface, OTA |
+| 1.1.0 | 2026-05-06 | Batterie, Deep Sleep, WiFiManager Captive Portal, Web-Interface, OTA |
 
 ---
 

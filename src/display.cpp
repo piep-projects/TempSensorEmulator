@@ -101,8 +101,15 @@ static void drawWifiIcon(int x, int y, bool connected) {
 
 // Logo aus LittleFS zeichnen (weiß auf schwarz)
 static void drawLogo(int x, int y, int maxW, int maxH) {
-    if (!LittleFS.exists("/logo.png")) return;
-    tft.drawPngFile(LittleFS, "/logo.png", x, y, maxW, maxH);
+    File f = LittleFS.open("/logo.png");
+    if (!f) return;
+    size_t sz = f.size();
+    uint8_t* buf = (uint8_t*)malloc(sz);
+    if (!buf) { f.close(); return; }
+    f.read(buf, sz);
+    f.close();
+    tft.drawPng(buf, sz, x, y, maxW, maxH);
+    free(buf);
 }
 
 // ── Öffentliche API ───────────────────────────────────────────

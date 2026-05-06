@@ -62,9 +62,17 @@ cd TempSensorEmulator
 pip install Pillow
 python3 tools/png_to_littlefs.py
 
-pio run -t uploadfs   # LittleFS-Image
+pio run -t uploadfs   # LittleFS-Image (Logo)
 pio run -t upload     # Firmware
 pio device monitor    # Serieller Monitor (115200 Baud)
+```
+
+> **16 MB Flash:** Das T-Display-S3 hat 16 MB Flash. Die `platformio.ini` setzt `board_upload.flash_size = 16MB` — ohne diesen Eintrag schlägt `uploadfs` fehl.
+
+**Über die Workbench (RFC2217):**
+```bash
+pio run -t uploadfs --upload-port 'rfc2217://<host>:<port>'
+pio run -t upload   --upload-port 'rfc2217://<host>:<port>'
 ```
 
 ## WLAN einrichten (WiFiManager Captive Portal)

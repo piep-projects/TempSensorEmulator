@@ -132,26 +132,26 @@ def logo_paste(img, x, y, max_w, max_h):
     return lw, lh
 
 def bat_icon(draw, x, y, pct, charging=False):
-    """Batterie-Icon exakt wie display.cpp: drawRect(x,y,20,10) + fillRect(x+20,y+3,2,4)."""
+    """Batterie-Icon exakt wie display.cpp: drawRect(x,y,24,14) + fillRect(x+24,y+4,3,6)."""
     col_fill = RED if pct < 15 else (ORANGE if pct < 30 else GREEN)
-    # Gehäuse 20×10
-    draw.rectangle([s(x), s(y), s(x)+s(20), s(y)+s(10)], outline=MIDGREY, width=s(1))
-    # Nub 2×4 bei x+20, y+3
-    draw.rectangle([s(x)+s(20), s(y)+s(3), s(x)+s(22), s(y)+s(7)], fill=MIDGREY)
+    # Gehäuse 24×14
+    draw.rectangle([s(x), s(y), s(x)+s(24), s(y)+s(14)], outline=MIDGREY, width=s(1))
+    # Nub 3×6 bei x+24, y+4
+    draw.rectangle([s(x)+s(24), s(y)+s(4), s(x)+s(27), s(y)+s(10)], fill=MIDGREY)
     # Füllstand
-    fw = max(0, min(18, (pct * 18) // 100))
+    fw = max(0, min(22, (pct * 22) // 100))
     if fw:
         draw.rectangle([s(x)+s(1), s(y)+s(1),
-                        s(x)+s(1)+int(fw*SCALE), s(y)+s(9)], fill=col_fill)
+                        s(x)+s(1)+int(fw*SCALE), s(y)+s(13)], fill=col_fill)
     if charging:
-        draw.text((s(x)+s(23), s(y)+s(1)), "+", font=F_F2, fill=YELLOW)
+        draw.text((s(x)+s(28), s(y)+s(3)), "+", font=F_F2, fill=YELLOW)
 
 def wifi_icon(draw, x, y, connected=True):
-    """WiFi-Balken wie display.cpp: 3 Rechtecke."""
+    """WiFi-Balken wie display.cpp: 3 Rechtecke, Höhe 14px."""
     c = WHITE if connected else DARKGREY
-    draw.rectangle([s(x),    s(y)+s(6), s(x)+s(3),  s(y)+s(10)], fill=c)
-    draw.rectangle([s(x)+s(4), s(y)+s(3), s(x)+s(7),  s(y)+s(10)], fill=c)
-    draw.rectangle([s(x)+s(8), s(y),      s(x)+s(11), s(y)+s(10)], fill=c)
+    draw.rectangle([s(x),      s(y)+s(8), s(x)+s(3),  s(y)+s(14)], fill=c)
+    draw.rectangle([s(x)+s(4), s(y)+s(4), s(x)+s(7),  s(y)+s(14)], fill=c)
+    draw.rectangle([s(x)+s(8), s(y),      s(x)+s(11), s(y)+s(14)], fill=c)
 
 # ══════════════════════════════════════════════════════════════
 # SCREEN 1: SPLASH
@@ -192,10 +192,10 @@ def make_main():
     # Kein Logo — "TempSensorEmulator" direkt links, x=4
     draw_text(draw, 4, 9, "TempSensorEmulator", F_F2, YELLOW)
 
-    # WiFi + Batterie: y=12 → vertikal zentriert mit F_F2-Text bei y=9 (h=16)
-    wifi_icon(draw, 175, 12, connected=True)
-    bat_icon(draw, 190, 12, pct=78, charging=False)
-    draw_text(draw, 214, 9, "78%", F_F2, WHITE)
+    # WiFi + Batterie: y=6 → vertikal zentriert mit F_F2-Text bei y=9 (h=16, Icons h=14)
+    wifi_icon(draw, 175, 6, connected=True)
+    bat_icon(draw, 191, 6, pct=78, charging=False)
+    draw_text(draw, 220, 9, "78%", F_F2, WHITE)
 
     # ── Tasten-Hint oben rechts (y 28 + 47, Abstand 19 px) ──
     draw_text_right(draw, 316, 28, "Temp +",    F_F2, YELLOW)
@@ -208,8 +208,8 @@ def make_main():
     ty_real = 63
     draw.text((s(tx_real), s(ty_real)), temp_str, font=F_TEMP, fill=WHITE)
 
-    # Grad-Symbol: nur kleines "o" (F_F4)
-    draw.text((s(tx_real) + tw + s(6), s(ty_real + 2)), "o", font=F_F4, fill=YELLOW)
+    # Grad-Symbol: nur kleines "o" (F_F4), höher als Ziffernoberkante
+    draw.text((s(tx_real) + tw + s(6), s(ty_real - 10)), "o", font=F_F4, fill=YELLOW)
 
     # ── Tasten-Hint unten rechts (y 110 + 129, Abstand 19 px) ──
     draw_text_right(draw, 316, 110, "Temp −",     F_F2, YELLOW)
@@ -246,8 +246,12 @@ def make_shutdown():
 
     separator(draw, 56, SEP_YEL)
 
-    # Letzte Temperatur — Font2, y=62 + y=76
-    draw_centered(draw, 62, "Letzte Temperatur:  27.0 °C", F_F2, MIDGREY)
+    # Letzte Temperatur — Text + "o" separat für Superscript-Position
+    temp_line = "Letzte Temperatur:  27.0"
+    lw = text_width(draw, temp_line, F_F2)
+    lx = (W - lw) // 2
+    draw.text((lx, s(62)), temp_line, font=F_F2, fill=MIDGREY)
+    draw.text((lx + lw + s(2), s(58)), "o", font=F_F2, fill=MIDGREY)
     draw_centered(draw, 76, "wurde gespeichert.",           F_F2, MIDGREY)
 
     separator(draw, 92, SEP_YEL)

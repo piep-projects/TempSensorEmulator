@@ -2,7 +2,7 @@
 
 > **Hinweis:** Dieses Dokument ist die Planungsgrundlage. Die verbindliche Spezifikation steht in [FDS.md](FDS.md).
 
-Version: 1.3  
+Version: 1.4  
 Hardware: LilyGo T-Display-S3 · MCP4018T-503 (50 kΩ) · LiPo 700 mAh
 
 ---
@@ -10,7 +10,7 @@ Hardware: LilyGo T-Display-S3 · MCP4018T-503 (50 kΩ) · LiPo 700 mAh
 ## 1. Startsequenz
 
 **Splash-Screen** (1,5 Sekunden):
-- piep design Logo (weiß auf schwarz) zentriert in oberer Bildschirmhälfte
+- piep projects Logo (weiß auf schwarz) zentriert in oberer Bildschirmhälfte
 - „TempSensorEmulator" in Gelb unterhalb des Logos
 - Firmware-Version in Dunkelgrau darunter
 - Keine Benutzeraktion erforderlich; danach automatisch → Hauptscreen
@@ -23,12 +23,12 @@ Layout (Querformat 320 × 170 px):
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ [Logo] TempSensorEmulator    ))) 192.168.1.x  🔋 78%  Temp +│  ← Statusleiste
-│                                                      3.5s:AUS│
+│ TempSensorEmulator            ))) 🔋 78%       Temp +        │  ← Statusleiste
+│                                                      lang:AUS│
 ├──────────────────────────────────────────────────────────────┤
 │                                                               │
 │                      -5.5 °C                         Temp −  │
-│                                                     3.5s:WLAN│
+│                                                    lang:WLAN │
 ├──────────────────────────────────────────────────────────────┤
 │  R = 22 237 Ω  ■ I²C                                        │  ← Info
 └──────────────────────────────────────────────────────────────┘
@@ -36,7 +36,7 @@ Layout (Querformat 320 × 170 px):
 
 | Element | Beschreibung |
 |---|---|
-| Logo + „TempSensorEmulator" | Weiß / Gelb; links in Statusleiste |
+| „TempSensorEmulator" | Gelb; links in Statusleiste |
 | Temperatur | Groß, weiß; °C in Gelb; ½-°C-Schritte |
 | Widerstand | Berechneter NTC-Wert in Ω (Gelb) |
 | I²C-Statusblock | Grün = OK, Rot = Fehler; direkt neben R-Wert |
@@ -120,7 +120,7 @@ Aufrufbar über IP-Adresse im Browser (Handy oder PC).
 
 ```
 ┌─────────────────────────────────────────────┐
-│        piep design                           │
+│        piep projects                           │
 │   Wolf CHA-07 Außenfühler-Emulator          │
 │                                             │
 │   Temperatur          [ − ]  -5.5°C  [ + ] │
@@ -163,7 +163,7 @@ src/
   wifi_mgr.h/.cpp   # WiFiManager, Web-Server, OTA
   prefs.h/.cpp      # NVS: Temperatur + WiFi-Credentials speichern
 data/
-  logo.png          # piep design Logo weiß (für LittleFS)
+  logo.png          # piep projects Logo weiß (für LittleFS)
 mockups/
   screen_splash.png
   screen_main.png
@@ -176,7 +176,7 @@ mockups/
 ## 8. Firmware-Versionsschema
 
 `MAJOR.MINOR.PATCH` — z. B. `v1.3.0`  
-Definiert als `#define FW_VERSION "v1.3.0"` in `config.h`.
+Definiert als `#define FW_VERSION "v1.4.0"` in `config.h`.
 
 ---
 
@@ -187,7 +187,7 @@ Definiert als `#define FW_VERSION "v1.3.0"` in `config.h`.
 | Wolf NTC B-Wert verifizieren | offen — Messung ausstehend |
 | WiFi-Ersteinrichtung | ✅ WiFiManager Captive Portal |
 | Display-Screens | ✅ 4 Screens: Splash, Main, WiFi-Setup, Shutdown |
-| Logo auf Display | ✅ weiß auf schwarz; klein in Statusleiste (Main) |
+| Logo auf Display | ✅ weiß auf schwarz; nur im Splash-Screen |
 | Temperaturanzeige | ✅ große Mono-Schrift, °C in Gelb |
 | Display-Ausrichtung (USB oben/unten) | offen — nicht festgelegt |
 | Gehäuse / Halterung | nicht spezifiziert |

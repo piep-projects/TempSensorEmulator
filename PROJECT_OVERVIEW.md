@@ -1,6 +1,6 @@
 # Wolf CHA-07 Außenfühler-Emulator — Projektübersicht
 
-**Hersteller:** piep design  
+**Hersteller:** piep projects  
 **Projekt:** TempSensorEmulator  
 **Hardware:** LilyGo T-Display-S3 · Soldered DIGIPOT 50 kΩ · LiPo 700 mAh  
 **Firmware:** Arduino / PlatformIO  
@@ -53,8 +53,8 @@ Das Gerät hat vier Display-Zustände (Mockups in `mockups/`):
 
 | Screen | Datei | Beschreibung |
 |---|---|---|
-| **Splash** | `screen_splash.png` | piep design Logo weiß auf schwarz, Firmware-Version |
-| **Main** | `screen_main.png` | Temperatur groß, Logo + Status oben, NTC-Info unten |
+| **Splash** | `screen_splash.png` | piep projects Logo weiß auf schwarz, Firmware-Version |
+| **Main** | `screen_main.png` | Temperatur groß, Statusleiste oben, NTC-Info unten |
 | **WiFi-Setup** | `screen_wifi_setup.png` | Captive-Portal-Anleitung (SSID, PW, 3 Schritte) |
 | **Shutdown** | `screen_shutdown.png` | Roter Warnrahmen, Hinweis auf echten Fühler, Countdown |
 
@@ -64,7 +64,7 @@ Das Gerät hat vier Display-Zustände (Mockups in `mockups/`):
 
 | Feature | Details |
 |---|---|
-| **Splash-Screen** | piep design Logo (weiß) + Firmware-Version beim Start |
+| **Splash-Screen** | piep projects Logo (weiß auf schwarz) + Firmware-Version beim Start |
 | **Temperaturanzeige** | −15 °C bis +30 °C, große Anzeige, Schritte 0,5 °C |
 | **Tastensteuerung** | Auslösung beim Loslassen · BOOT loslassen < 3,5 s = −0,5 °C · KEY loslassen < 3,5 s = +0,5 °C · kein Auto-Repeat |
 | **Deep Sleep** | KEY ≥ 3,5 s halten + loslassen → Stromsparmodus; beliebige Taste → Aufwachen |
@@ -147,7 +147,7 @@ TempSensorEmulator/
 │   ├── wifi_mgr.h/.cpp       # WiFiManager, Webserver, OTA
 │   └── prefs.h/.cpp          # NVS-Persistenz
 ├── data/
-│   └── logo.png              # piep design Logo (LittleFS, Splash + Main)
+│   └── logo.png              # piep projects Logo (LittleFS, Splash-Screen)
 ├── mockups/
 │   ├── screen_splash.png     # Splash-Screen Mockup
 │   ├── screen_main.png       # Haupt-Screen Mockup
@@ -215,7 +215,8 @@ TempSensorEmulator/
 | 1.2.0 | 2026-05-06 | WiFi optional (on-demand via BOOT 3,5 s); KEY 3,5 s = Sleep; LittleFS-Fix |
 | 1.3.0 | 2026-05-06 | Neues Logo (piep-logo-projects1); überarbeitetes Display-Design (gelbe Farbgebung, Knopf-Beschriftung); Release-Trigger-Tasten (kein Auto-Repeat); Shutdown-Countdown 10 s |
 | 1.3.1 | 2026-05-06 | Splash-Logo-Bug behoben (LovyanGFX drawPng-Upscale-Artefakt); Mockup-Generator neu kalibriert (exakte Font-Metriken + Koordinaten) |
+| 1.4.0 | 2026-05-07 | Display-Redesign: kein Logo in Kopfzeilen (nur Splash), Screens neu layoutet, Hint-Texte „lang:" statt „3.5s:", I²C-Status per Textfarbe, WiFi/Batterie-Icons vergrößert, Gradzeichen als Superscript |
 
 ---
 
-*piep design · wolfgang@v-online.me*
+*piep projects*

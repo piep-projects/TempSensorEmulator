@@ -1,7 +1,7 @@
 #pragma once
 
 // ── Firmware ──────────────────────────────────────────────────
-#define FW_VERSION      "v1.3.0"
+#define FW_VERSION      "v1.4.0"
 
 // ── T-Display-S3 Tasten ───────────────────────────────────────
 #define PIN_BTN_MINUS    0    // BOOT-Taste  (active LOW)

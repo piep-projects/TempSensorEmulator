@@ -6,10 +6,10 @@
 | Dokument | FDS-TempSensorEmulator |
 | Version | 1.4 |
 | Status | Freigegeben |
-| Autor | piep design |
+| Autor | piep projects |
 | Datum | 2026-05-06 |
 | Hardware | LilyGo T-Display-S3 · MCP4018T-503 · LiPo 700 mAh |
-| Firmware | v1.3.0 |
+| Firmware | v1.4.0 |
 
 ---
 
@@ -187,7 +187,7 @@ Interpolation linear zwischen Stützpunkten. Messung alle 10 s, gleitender Mitte
 | ID | Anforderung |
 |---|---|
 | FR-01.1 | Nach dem Einschalten oder Aufwachen aus Deep Sleep zeigt das Gerät den Splash-Screen. |
-| FR-01.2 | Der Splash-Screen zeigt das piep design Logo (aus LittleFS, weiß auf schwarz) zentriert in der oberen Bildschirmhälfte. |
+| FR-01.2 | Der Splash-Screen zeigt das piep projects Logo (aus LittleFS, weiß auf schwarz) zentriert in der oberen Bildschirmhälfte. |
 | FR-01.3 | Unterhalb des Logos erscheint der Text „TempSensorEmulator" in Gelb, darunter die Firmware-Version in Dunkelgrau. |
 | FR-01.4 | Der Splash-Screen bleibt 1,5 Sekunden sichtbar. |
 | FR-01.5 | Nach Ablauf der 1,5 Sekunden wechselt das Gerät selbstständig in den Hauptscreen. |
@@ -200,8 +200,8 @@ Interpolation linear zwischen Stützpunkten. Messung alle 10 s, gleitender Mitte
 |---|---|
 | FR-02.1 | Der Hauptscreen zeigt die aktuelle Simulationstemperatur in großer weißer Monospace-Schrift zentriert. Die Einheit „°C" wird in Gelb daneben angezeigt. |
 | FR-02.2 | In der Info-Zeile (unten links) wird der berechnete NTC-Widerstand angezeigt (Gelb). Direkt daneben steht ein farbiger I²C-Statusblock (grün = OK, rot = Fehler) mit Beschriftung „I²C". |
-| FR-02.3 | Die Statusleiste (oben) enthält: piep design Logo + „TempSensorEmulator" (Gelb) links; WiFi-Balken + IP-Adresse mittig; Batterie-Icon + % rechts. |
-| FR-02.4 | Rechts oben (nahe dem physischen + Knopf): „Temp +" in Gelb, darunter „3.5s: AUS" in Weiß. Rechts unten (nahe dem physischen − Knopf): „Temp −" in Gelb, darunter „3.5s: WLAN" in Weiß. |
+| FR-02.3 | Die Statusleiste (oben) enthält: „TempSensorEmulator" (Gelb) links; WiFi-Balken-Icon + Batterie-Icon + % rechts. Die IP-Adresse wird nicht in der Statusleiste angezeigt. |
+| FR-02.4 | Rechts oben (nahe dem physischen + Knopf): „Temp +" in Gelb, darunter „lang: AUS" in Weiß. Rechts unten (nahe dem physischen − Knopf): „Temp −" in Gelb, darunter „lang: WLAN" in Weiß. |
 | FR-02.5 | Der Screen wird nach jeder Temperaturänderung vollständig neu gezeichnet. |
 | FR-02.6 | Der MCP4018-Schrittwert (0–127) wird nicht mehr auf dem Display angezeigt. |
 
@@ -498,7 +498,7 @@ Wird angezeigt, solange WiFiManager im AP-Modus auf Konfiguration wartet.
 Responsive HTML5-Seite. Automatischer Refresh alle 10 Sekunden (`<meta http-equiv="refresh">`).
 
 Inhalte:
-- piep design Logo (eingebettet als Base64 oder verlinkt)
+- Titel „Wolf CHA-07 Außenfühler-Emulator"
 - Titel „Wolf CHA-07 Außenfühler-Emulator"
 - Aktuelle Temperatur (groß)
 - Schaltflächen `[−]` und `[+]` (POST auf `/set`)

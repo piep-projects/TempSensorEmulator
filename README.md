@@ -116,7 +116,7 @@ TempSensorEmulator/
 │   ├── wifi_mgr.h/.cpp   # WiFiManager, Webserver, OTA
 │   └── prefs.h/.cpp      # NVS-Persistenz
 ├── data/
-│   └── logo.png          # piep design Logo (LittleFS, Splash-Screen)
+│   └── logo.png          # piep projects Logo (LittleFS, Splash-Screen)
 ├── mockups/              # Display-Mockups (PNG)
 ├── datasheets/           # MCP4018-Datenblätter, Logo-Quelle
 ├── tools/
@@ -125,4 +125,4 @@ TempSensorEmulator/
 └── platformio.ini
 ```
 
-*piep design · wolfgang@v-online.me*
+*piep projects*

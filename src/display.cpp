@@ -74,28 +74,28 @@ static void drawSeparator(int y, uint32_t col = COL_SEP) {
     tft.drawFastHLine(0, y, 320, col);
 }
 
-// Batterie-Icon bei (x,y), Breite 22px, Höhe 10px
+// Batterie-Icon bei (x,y), Breite 27px, Höhe 14px
 static void drawBatIcon(int x, int y, int pct, bool charging) {
     uint32_t fillColor = pct < BAT_WARN_PCT ? COL_RED :
                          pct < 30           ? COL_ORANGE : COL_GREEN;
-    tft.drawRect(x, y, 20, 10, COL_MIDGREY);
-    tft.fillRect(x + 20, y + 3, 2, 4, COL_MIDGREY);
-    int fw = constrain((pct * 18) / 100, 0, 18);
-    if (fw > 0) tft.fillRect(x + 1, y + 1, fw, 8, fillColor);
+    tft.drawRect(x, y, 24, 14, COL_MIDGREY);
+    tft.fillRect(x + 24, y + 4, 3, 6, COL_MIDGREY);
+    int fw = constrain((pct * 22) / 100, 0, 22);
+    if (fw > 0) tft.fillRect(x + 1, y + 1, fw, 12, fillColor);
     if (charging) {
         tft.setTextColor(COL_YELLOW);
         tft.setFont(&fonts::Font0);
-        tft.setCursor(x + 23, y + 1);
+        tft.setCursor(x + 28, y + 3);
         tft.print("+");
     }
 }
 
-// WiFi-Balken (3 Stufen) bei (x,y), Breite ~11px, Höhe 10px
+// WiFi-Balken (3 Stufen) bei (x,y), Breite ~11px, Höhe 14px
 static void drawWifiIcon(int x, int y, bool connected) {
     uint32_t c = connected ? COL_WHITE : COL_DKGREY;
-    tft.fillRect(x,      y + 6, 3, 4,  c);
-    tft.fillRect(x + 4,  y + 3, 3, 7,  c);
-    tft.fillRect(x + 8,  y,     3, 10, c);
+    tft.fillRect(x,      y + 8, 3, 6,  c);
+    tft.fillRect(x + 4,  y + 4, 3, 10, c);
+    tft.fillRect(x + 8,  y,     3, 14, c);
 }
 
 // Logo aus LittleFS zeichnen (PNG, weiß auf schwarz)
@@ -191,13 +191,13 @@ void drawMain(float tempC, float ohm,
     tft.drawString("TempSensorEmulator", 4, 9);
 
     bool connected = (wifiIP[0] != '-' && wifiIP[0] != 'A');
-    drawWifiIcon(175, 8, connected);
+    drawWifiIcon(175, 6, connected);
 
-    drawBatIcon(190, 8, batPct, charging);
+    drawBatIcon(191, 6, batPct, charging);
     tft.setTextColor(batPct < BAT_WARN_PCT ? COL_RED : COL_WHITE);
     char buf[8];
     snprintf(buf, sizeof(buf), "%d%%", batPct);
-    tft.drawString(buf, 214, 9);
+    tft.drawString(buf, 220, 9);
 
     drawSeparator(26);
 
@@ -229,7 +229,7 @@ void drawMain(float tempC, float ohm,
     tft.setFont(&fonts::Font4);
     tft.setTextColor(COL_YELLOW);
     tft.setTextSize(1);
-    tft.drawString("o", tx + tw + 6, ty + 2);
+    tft.drawString("o", tx + tw + 6, ty - 10);
 
     // ── Tasten-Hint unten rechts: BOOT = Temp − ──────────────
     tft.setFont(&fonts::Font2);
@@ -329,11 +329,15 @@ void drawShutdown(float tempC, int countdownSec) {
 
     drawSeparator(56, COL_SEP_YEL);
 
-    // Letzte Temperatur
+    // Letzte Temperatur — Text + "o" separat für Superscript-Position
     tft.setFont(&fonts::Font2);
     char buf[40];
-    snprintf(buf, sizeof(buf), "Letzte Temperatur:  %.1f oC", tempC);
-    drawCentered(buf, 62, &fonts::Font2, COL_MIDGREY);
+    snprintf(buf, sizeof(buf), "Letzte Temperatur:  %.1f", tempC);
+    int lw = tft.textWidth(buf);
+    int lx = (320 - lw) / 2;
+    tft.setTextColor(COL_MIDGREY);
+    tft.drawString(buf, lx, 62);
+    tft.drawString("o", lx + lw + 2, 58);
     drawCentered("wurde gespeichert.", 76, &fonts::Font2, COL_MIDGREY);
 
     drawSeparator(92, COL_SEP_YEL);

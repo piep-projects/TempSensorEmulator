@@ -2,7 +2,8 @@
 
 Simuliert den NTC-Außentemperaturfühler einer Wolf CHA-07/10/16/20 Monoblock-Wärmepumpe mittels digitalem Potentiometer. Ermöglicht Funktions- und Heizkurvtests unabhängig von der realen Außentemperatur.
 
-→ Vollständige Dokumentation: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [FDS.md](FDS.md)
+→ Vollständige Dokumentation: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [FDS.md](FDS.md)  
+→ Projektseite: [projects.v-online.me](https://projects.v-online.me/projekt/wolf-cha-07-ausenfuhler-emulator/)
 
 ---
 

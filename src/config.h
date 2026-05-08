@@ -1,7 +1,7 @@
 #pragma once
 
 // ── Firmware ──────────────────────────────────────────────────
-#define FW_VERSION      "v1.4.0"
+#define FW_VERSION      "v1.4.1"
 
 // ── T-Display-S3 Tasten ───────────────────────────────────────
 #define PIN_BTN_MINUS    0    // BOOT-Taste  (active LOW)
@@ -35,7 +35,7 @@
 
 // ── MCP4018T-503 ─────────────────────────────────────────────
 #define MCP4018_ADDR    0x2F
-#define MCP_R_AB        50000.0f   // 50 kΩ Ende-Ende
+#define MCP_R_AB        46000.0f   // gemessen ~46 kΩ (Nennwert 50 kΩ, ±20% Toleranz)
 #define MCP_R_W            75.0f   // Wiper-Widerstand (typ.)
 #define MCP_STEPS           128    // Schritte (0 … 127)
 

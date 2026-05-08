@@ -4,12 +4,12 @@
 | Feld | Wert |
 |---|---|
 | Dokument | FDS-TempSensorEmulator |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Freigegeben |
 | Autor | piep projects |
-| Datum | 2026-05-06 |
+| Datum | 2026-05-08 |
 | Hardware | LilyGo T-Display-S3 · MCP4018T-503 · LiPo 700 mAh |
-| Firmware | v1.4.0 |
+| Firmware | v1.4.1 |
 
 ---
 
@@ -40,7 +40,7 @@ Dieses Dokument beschreibt die vollständige funktionale Spezifikation des Wolf 
 
 ### 1.2 Geltungsbereich
 
-Das Dokument gilt für Firmware-Version v1.3.0 und die zugehörige Hardware-Revision 1.0.
+Das Dokument gilt für Firmware-Version v1.4.1 und die zugehörige Hardware-Revision 1.0.
 
 ### 1.3 Zweck des Geräts
 
@@ -133,18 +133,24 @@ Der Außentemperaturfühler der Wolf CHA-07/10/16/20 Monoblock-Wärmepumpe ist e
 | Parameter | Wert |
 |---|---|
 | Typ | Single-End-Rheostat |
-| Nennwiderstand R_AB | 50 000 Ω |
+| Nennwiderstand R_AB | 50 000 Ω (kalibriert: 46 000 Ω — gemessen, innerhalb ±20 % Toleranz) |
 | Wiper-Widerstand R_W | 75 Ω (typ.) |
 | Auflösung | 128 Schritte (7-Bit) |
 | I²C-Adresse | 0x2F (fest) |
 | Betriebsspannung | 1,8 – 5,5 V (3,3 V) |
 | I²C-Takt | 100 kHz |
 
-**Widerstandsformel:**
+**Ausgangspins (Soldered-Breakout):**
+
+Der Soldered-Breakout führt Pin B **nicht** auf GND. Der genutzte Widerstandspfad ist
+**PW (Wiper) ↔ PA (Terminal A)**. Messung und Heizungsanschluss erfolgen an diesen beiden Pins.
+Pin PB bleibt offen.
+
+**Widerstandsformel (W↔A-Pfad):**
 
 ```
-R_WB(step) = step × (R_AB / 128) + R_W
-           = step × 390,625 Ω + 75 Ω
+R_WA(step) = (128 − step) × (R_AB / 128) + R_W
+           = (128 − step) × 359,375 Ω + 75 Ω    (mit R_AB = 46 000 Ω)
 ```
 
 **I²C-Schreibzugriff:**
@@ -225,7 +231,7 @@ Es gibt kein Auto-Repeat — pro Drück-/Loslass-Zyklus wird genau eine Aktion a
 |---|---|
 | FR-04.1 | Der Ziel-Widerstand wird nach der Steinhart-Hart-vereinfachten B-Formel berechnet: `R = R25 × exp(B × (1/T − 1/T25))` |
 | FR-04.2 | Parameter: R25 = 5000 Ω, B = 3977 K, T25 = 298,15 K. |
-| FR-04.3 | Der berechnete Widerstand wird in einen MCP4018-Schritt umgerechnet: `step = round((R − R_W) × 128 / R_AB)`, begrenzt auf 0–127. |
+| FR-04.3 | Der berechnete Widerstand wird in einen MCP4018-Schritt umgerechnet (W↔A-Pfad): `step = round(128 − (R − R_W) × 128 / R_AB)`, begrenzt auf 0–127. |
 | FR-04.4 | Nach jedem Schreibzugriff wird der I²C-Rückgabewert geprüft; bei Fehler wird der I²C-Status im Display rot angezeigt. |
 | FR-04.5 | Beim Start wird ein I²C-Scan durchgeführt; ist der MCP4018 nicht erreichbar, bleibt der Fehler dauerhaft angezeigt. |
 
@@ -327,7 +333,8 @@ Betriebstemperatur: 0 °C – 50 °C · Luftfeuchtigkeit: nicht kondensierend.
 | Anforderung | Wert |
 |---|---|
 | NTC-Genauigkeit (nach B-Wert-Kalibrierung) | ±1 °C |
-| MCP4018-Schritt-Auflösung | 390 Ω/Schritt → ±0,3 °C bei 0 °C |
+| MCP4018-Schritt-Auflösung | 359 Ω/Schritt (R_AB = 46 kΩ) → ±0,3 °C bei 0 °C |
+| Messfehler nach Kalibrierung (Kontrollmessung) | ±0,2 °C bei 0 °C und 25 °C |
 | I²C-Fehler | 3 Wiederholungsversuche, dann Fehler-Flag |
 
 ---
@@ -589,20 +596,27 @@ Inhalte:
 **Typ:** NTC 5 kΩ bei 25 °C  
 **B-Wert:** 3977 K *(Schätzwert — Herstellerangabe nicht veröffentlicht; mit Messung verifizieren)*
 
-| Temperatur | Widerstand | MCP4018-Schritt | Schrittweite* |
+Schritte beziehen sich auf den **W↔A-Pfad** mit R_AB = 46 000 Ω (kalibriert).  
+Kontrollmessung ergab ±0,2 °C Abweichung bei 0 °C und 25 °C.
+
+| Temperatur | Widerstand | MCP4018-Schritt (W↔A) | Schrittweite* |
 |---:|---:|---:|---:|
-| −15 °C | 39 499 Ω | 101 | — |
-| −10 °C | 29 476 Ω | 75 | ≈ 0,2 °C/Schritt |
-| −5 °C | 22 237 Ω | 57 | ≈ 0,3 °C/Schritt |
-| 0 °C | 16 950 Ω | 43 | ≈ 0,4 °C/Schritt |
-| +5 °C | 13 047 Ω | 33 | ≈ 0,5 °C/Schritt |
-| +10 °C | 10 136 Ω | 26 | ≈ 0,7 °C/Schritt |
-| +15 °C | 7 943 Ω | 20 | ≈ 0,8 °C/Schritt |
-| +20 °C | 6 277 Ω | 16 | ≈ 1,3 °C/Schritt |
-| +25 °C | 5 000 Ω | 13 | ≈ 1,5 °C/Schritt |
-| +30 °C | 4 013 Ω | 10 | ≈ 1,7 °C/Schritt |
+| −15 °C | 39 499 Ω | 18 | — |
+| −10 °C | 29 476 Ω | 46 | ≈ 0,2 °C/Schritt |
+| −5 °C | 22 237 Ω | 66 | ≈ 0,3 °C/Schritt |
+| 0 °C | 16 950 Ω | 81 | ≈ 0,4 °C/Schritt |
+| +5 °C | 13 047 Ω | 92 | ≈ 0,5 °C/Schritt |
+| +10 °C | 10 136 Ω | 100 | ≈ 0,7 °C/Schritt |
+| +15 °C | 7 943 Ω | 106 | ≈ 0,8 °C/Schritt |
+| +20 °C | 6 277 Ω | 111 | ≈ 1,3 °C/Schritt |
+| +25 °C | 5 000 Ω | 114 | ≈ 1,5 °C/Schritt |
+| +30 °C | 4 013 Ω | 117 | ≈ 1,7 °C/Schritt |
 
 *\* Temperaturauflösung pro MCP4018-Schritt — im relevanten Winterbereich (−10 bis +5 °C) besser als 0,5 °C.*
+
+**Ausgangswiderstand messen:**  
+Multimeter an **PW und PA** des Soldered-Breakouts anlegen (nicht PW/GND — Pin B nicht zugänglich).  
+Gerät muss eingeschaltet und der MCP4018 per I²C programmiert sein.
 
 **B-Wert verifizieren:**  
 Sensor bei bekannter Temperatur (z. B. Eiswasser = 0 °C) mit Multimeter messen.  

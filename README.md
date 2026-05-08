@@ -11,7 +11,7 @@ Simuliert den NTC-Außentemperaturfühler einer Wolf CHA-07/10/16/20 Monoblock-W
 | Komponente | Modell |
 |---|---|
 | Mikrocontroller | LilyGo T-Display-S3 (ESP32-S3, 1,9" Display) |
-| Digitalpotentiometer | Soldered DIGIPOT **50 kΩ** (MCP4018T-503) |
+| Digitalpotentiometer | Soldered DIGIPOT 50 kΩ nom. (MCP4018T-503, kalibriert ~46 kΩ) |
 | Akku | LiPo 3,7 V / 700 mAh |
 | Verbindung | I²C über QWIIC-Buchse |
 
@@ -25,24 +25,27 @@ GND        ────────── GND
 GPIO 18    ────────── SDA  (QWIIC)
 GPIO 17    ────────── SCL  (QWIIC)
                        PW ─────────────────────── Fühler Klemme 1
-                       PB ─────────────────────── Fühler Klemme 2
-                       PA  offen lassen
+                       PA ─────────────────────── Fühler Klemme 2
+                       PB  offen (nicht auf GND geführt)
 ```
+
+> **Ausgangspins:** Der Soldered-Breakout führt Pin B (PB) nicht auf GND — der nutzbare
+> Widerstandspfad ist **PW ↔ PA**. Messung mit Multimeter ebenfalls an diesen beiden Pins.
 
 ## Sensor-Kennlinie
 
 Wolf-Außenfühler Art.-Nr. 2748916 · NTC 5 kΩ bei 25 °C · B = 3977 K *(Schätzwert)*
 
-| Temperatur | Widerstand | MCP4018-Schritt |
+| Temperatur | Widerstand | MCP4018-Schritt (PW↔PA) |
 |---:|---:|---:|
-| −15 °C | 39 499 Ω | 101 / 127 |
-| −10 °C | 29 476 Ω | 75 / 127 |
-| −5 °C | 22 237 Ω | 57 / 127 |
-| 0 °C | 16 950 Ω | 43 / 127 |
-| +5 °C | 13 047 Ω | 33 / 127 |
-| +10 °C | 10 136 Ω | 26 / 127 |
-| +20 °C | 6 277 Ω | 16 / 127 |
-| +30 °C | 4 013 Ω | 10 / 127 |
+| −15 °C | 39 499 Ω | 18 / 127 |
+| −10 °C | 29 476 Ω | 46 / 127 |
+| −5 °C | 22 237 Ω | 66 / 127 |
+| 0 °C | 16 950 Ω | 81 / 127 |
+| +5 °C | 13 047 Ω | 92 / 127 |
+| +10 °C | 10 136 Ω | 100 / 127 |
+| +20 °C | 6 277 Ω | 111 / 127 |
+| +30 °C | 4 013 Ω | 117 / 127 |
 
 ## Bedienung
 

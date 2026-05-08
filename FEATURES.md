@@ -2,8 +2,8 @@
 
 > **Hinweis:** Dieses Dokument ist die Planungsgrundlage. Die verbindliche Spezifikation steht in [FDS.md](FDS.md).
 
-Version: 1.4  
-Hardware: LilyGo T-Display-S3 · MCP4018T-503 (50 kΩ) · LiPo 700 mAh
+Version: 1.4.1  
+Hardware: LilyGo T-Display-S3 · MCP4018T-503 (50 kΩ nom., kalibriert ~46 kΩ) · LiPo 700 mAh
 
 ---
 
@@ -176,7 +176,7 @@ mockups/
 ## 8. Firmware-Versionsschema
 
 `MAJOR.MINOR.PATCH` — z. B. `v1.3.0`  
-Definiert als `#define FW_VERSION "v1.4.0"` in `config.h`.
+Definiert als `#define FW_VERSION "v1.4.1"` in `config.h`.
 
 ---
 

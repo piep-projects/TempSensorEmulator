@@ -27,7 +27,7 @@ Dieses Gerät ersetzt den echten Sensor durch ein per Hand einstellbares **digit
 | Komponente | Modell | Funktion |
 |---|---|---|
 | Mikrocontroller | LilyGo T-Display-S3 (ESP32-S3) | Steuerung, Display, WiFi |
-| Digitalpotentiometer | Soldered DIGIPOT 50 kΩ (MCP4018T-503) | NTC-Widerstand simulieren |
+| Digitalpotentiometer | Soldered DIGIPOT 50 kΩ nom. (MCP4018T-503, kalibriert ~46 kΩ) | NTC-Widerstand simulieren |
 | Akku | LiPo 3,7 V / 700 mAh | Mobiler Betrieb |
 | Verbindung zum Regler | 2-Draht, an Fühleranschluss Wolf | Ersatz des echten Sensors |
 
@@ -41,9 +41,13 @@ GND        ────────── GND
 GPIO 18    ────────── SDA  (QWIIC)
 GPIO 17    ────────── SCL  (QWIIC)
                        PW ─────────────────────── Fühler Klemme 1
-                       PB ─────────────────────── Fühler Klemme 2
-                       PA  offen lassen
+                       PA ─────────────────────── Fühler Klemme 2
+                       PB  offen (nicht auf GND geführt)
 ```
+
+> **Ausgangspins:** Der Soldered-Breakout führt Pin B (PB) nicht auf GND — der nutzbare
+> Widerstandspfad ist **PW ↔ PA**. Ausgangswiderstand messen: Multimeter an **PW und PA** anlegen
+> (nicht PW/GND — Pin B ist nicht zugänglich).
 
 ---
 
@@ -82,7 +86,7 @@ Das Gerät hat vier Display-Zustände (Mockups in `mockups/`):
 ### 1. Hardware verbinden
 
 Gemäß Verdrahtungstabelle oben. MCP4018 an QWIIC-Buchse des T-Display-S3.  
-PW und PB an die Fühleranschlussklemmen der Wolf-Steuerung.
+PW und PA an die Fühleranschlussklemmen der Wolf-Steuerung.
 
 ### 2. Firmware flashen
 
@@ -216,6 +220,7 @@ TempSensorEmulator/
 | 1.3.0 | 2026-05-06 | Neues Logo (piep-logo-projects1); überarbeitetes Display-Design (gelbe Farbgebung, Knopf-Beschriftung); Release-Trigger-Tasten (kein Auto-Repeat); Shutdown-Countdown 10 s |
 | 1.3.1 | 2026-05-06 | Splash-Logo-Bug behoben (LovyanGFX drawPng-Upscale-Artefakt); Mockup-Generator neu kalibriert (exakte Font-Metriken + Koordinaten) |
 | 1.4.0 | 2026-05-07 | Display-Redesign: kein Logo in Kopfzeilen (nur Splash), Screens neu layoutet, Hint-Texte „lang:" statt „3.5s:", I²C-Status per Textfarbe, WiFi/Batterie-Icons vergrößert, Gradzeichen als Superscript |
+| 1.4.1 | 2026-05-08 | Bugfix: Widerstandspfad W↔A statt W↔B (Pin B am Soldered-Breakout nicht auf GND); R_AB auf 46 000 Ω kalibriert (gemessen, Nennwert 50 kΩ ±20 %); Genauigkeit ±0,2 °C verifiziert |
 
 ---
 

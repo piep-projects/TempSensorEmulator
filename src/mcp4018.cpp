@@ -28,3 +28,16 @@ bool mcp4018Set(uint8_t step) {
 bool mcp4018IsOk() {
     return g_ok;
 }
+
+void mcp4018ScanBus() {
+    Serial.println("I2C-Scan (QWIIC / STEMMA QT / EasyC):");
+    int found = 0;
+    for (uint8_t addr = 0x08; addr <= 0x77; addr++) {
+        Wire.beginTransmission(addr);
+        if (Wire.endTransmission() == 0) {
+            Serial.printf("  0x%02X%s\n", addr, addr == MCP4018_ADDR ? " ← MCP4018" : "");
+            found++;
+        }
+    }
+    if (found == 0) Serial.println("  keine Geräte gefunden");
+}

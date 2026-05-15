@@ -2,6 +2,7 @@
 #include "config.h"
 #include "display.h"
 #include "ntc.h"
+#include "mcp4018.h"
 #include "battery.h"
 #include <WiFi.h>
 #include <WiFiManager.h>
@@ -91,6 +92,7 @@ static void handleSet() {
     t = roundf(t / TEMP_STEP) * TEMP_STEP;
     t = constrain(t, TEMP_MIN, TEMP_MAX);
     *g_pTemp = t;
+    mcp4018Set(ntcToStep(t));
     server.sendHeader("Location", "/");
     server.send(302);
 }
@@ -138,32 +140,7 @@ static void serverSetup() {
 void wifiBegin() {
     wm.setConnectTimeout(WIFI_TIMEOUT_S);
     wm.setConnectRetries(2);
-
-    if (!wm.getWiFiIsSaved()) {
-        Serial.println("Keine WLAN-Credentials — Offline-Betrieb");
-        return;
-    }
-
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(wm.getWiFiSSID(false).c_str(), wm.getWiFiPass(false).c_str());
-    Serial.print("WLAN verbinden");
-    uint32_t start = millis();
-    while (WiFi.status() != WL_CONNECTED &&
-           millis() - start < (uint32_t)WIFI_TIMEOUT_S * 1000) {
-        delay(200);
-        Serial.print(".");
-    }
-    Serial.println();
-
-    if (WiFi.status() == WL_CONNECTED) {
-        g_connected = true;
-        g_ip = WiFi.localIP().toString();
-        Serial.printf("WiFi verbunden: %s\n", g_ip.c_str());
-        serverSetup();
-    } else {
-        WiFi.disconnect(true);
-        Serial.println("WLAN fehlgeschlagen — Offline-Betrieb");
-    }
+    Serial.println("WiFi: on-demand (BOOT >= 3.5 s zum Verbinden / Portal)");
 }
 
 void wifiStartPortal() {

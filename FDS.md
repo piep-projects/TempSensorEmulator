@@ -9,7 +9,7 @@
 | Autor | piep projects |
 | Datum | 2026-05-08 |
 | Hardware | LilyGo T-Display-S3 · MCP4018T-503 · LiPo 700 mAh |
-| Firmware | v1.4.1 |
+| Firmware | v1.4.2 |
 
 ---
 
@@ -40,7 +40,7 @@ Dieses Dokument beschreibt die vollständige funktionale Spezifikation des Wolf 
 
 ### 1.2 Geltungsbereich
 
-Das Dokument gilt für Firmware-Version v1.4.1 und die zugehörige Hardware-Revision 1.0.
+Das Dokument gilt für Firmware-Version v1.4.2 und die zugehörige Hardware-Revision 1.0.
 
 ### 1.3 Zweck des Geräts
 
@@ -123,8 +123,8 @@ Der Außentemperaturfühler der Wolf CHA-07/10/16/20 Monoblock-Wärmepumpe ist e
 | 9 | LCD RD | Ausgang | |
 | 14 | Taste KEY (+) | Eingang | Active LOW, interner Pull-up |
 | 15 | LCD Power Enable | Ausgang | Active HIGH |
-| 17 | I²C SCL | Ausgang | QWIIC-Buchse |
-| 18 | I²C SDA | Ein/Aus | QWIIC-Buchse |
+| 43 | I²C SDA | Ein/Aus | QWIIC / STEMMA QT / EasyC |
+| 44 | I²C SCL | Ausgang | QWIIC / STEMMA QT / EasyC |
 | 38 | LCD Backlight | Ausgang | PWM, aktiv HIGH |
 | 39–48 | LCD Datenbus D0–D7 | Ausgang | 8-Bit parallel 8080 |
 
@@ -271,9 +271,9 @@ Implementierung über **WiFiManager** (Library: `tzapu/WiFiManager`).
 
 | ID | Anforderung |
 |---|---|
-| FR-08.1 | Beim Start verbindet sich das Gerät **still** mit dem gespeicherten Netz (Timeout: 10 s). Kein Portal, kein Blockieren. |
-| FR-08.2 | Sind keine Credentials vorhanden oder schlägt die Verbindung fehl, läuft das Gerät **offline** weiter. |
-| FR-08.3 | Das Captive Portal wird **nur auf Knopfdruck** gestartet: BOOT-Taste ≥ 3,5 s halten und loslassen. |
+| FR-08.1 | Das WiFi-Modul wird beim Start **nicht** aktiviert. Das Gerät läuft immer offline bis der Nutzer WiFi explizit startet. |
+| FR-08.2 | WiFi wird **nur auf Knopfdruck** gestartet: BOOT-Taste ≥ 3,5 s halten und loslassen. Sind Credentials gespeichert, verbindet sich das Gerät direkt; andernfalls öffnet sich das Captive Portal. |
+| FR-08.3 | ~~Entfallen~~ (in FR-08.2 zusammengefasst). |
 | FR-08.4 | AP-Parameter: SSID `CHA-Emulator`, Passwort `wolf1234`, IP `192.168.4.1`. |
 | FR-08.5 | Das Gerät zeigt während des AP-Modus den WiFi-Setup-Screen (§9.4) mit Verbindungsanleitung. |
 | FR-08.6 | Das Handy verbindet sich mit dem AP; der Browser öffnet automatisch das Captive Portal (wie Hotel-WLAN). |
@@ -549,7 +549,7 @@ Inhalte:
 
 | Parameter | Wert |
 |---|---|
-| Pins | SDA = GPIO 18, SCL = GPIO 17 |
+| Pins | SDA = GPIO 43, SCL = GPIO 44 |
 | Frequenz | 100 kHz |
 | Adresse | 0x2F (7-Bit, fest) |
 | Protokoll | Single-Byte-Write: `[START][0x5E][step][STOP]` |
@@ -583,7 +583,7 @@ Inhalte:
 |---|---|---|
 | MCP4018 nicht erreichbar | I²C EndTransmission ≠ 0 | Rote Statusanzeige; 3 Retries; weiter laufen |
 | LittleFS mount fehlt | `LittleFS.begin()` false | Splash ohne Logo; Text-Fallback |
-| WiFi-Verbindung fehlgeschlagen | 10-s-Timeout | Offline-Betrieb; Portal per BOOT 3,5 s |
+| WiFi nicht gestartet | Default-Zustand beim Boot | Offline-Betrieb; Portal/Verbindung per BOOT ≥ 3,5 s |
 | Temperatur außerhalb Bereich (Web) | Validierung in `/set` | HTTP 400 |
 | Akku kritisch (< 5 %) | SoC-Berechnung | Shutdown-Screen, dann Deep Sleep |
 | NVS leer | `nvs_get` not found | Standardwerte verwenden |

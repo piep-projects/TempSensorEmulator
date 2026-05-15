@@ -89,6 +89,7 @@ void setup() {
     delay(1500);
 
     bool i2cOk = mcp4018Begin(PIN_I2C_SDA, PIN_I2C_SCL);
+    mcp4018ScanBus();
     Serial.printf("MCP4018: %s\n", i2cOk ? "OK" : "NICHT GEFUNDEN");
 
     prefsBegin();

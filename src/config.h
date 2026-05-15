@@ -1,7 +1,7 @@
 #pragma once
 
 // ── Firmware ──────────────────────────────────────────────────
-#define FW_VERSION      "v1.4.1"
+#define FW_VERSION      "v1.4.2"
 
 // ── T-Display-S3 Tasten ───────────────────────────────────────
 #define PIN_BTN_MINUS    0    // BOOT-Taste  (active LOW)
@@ -26,9 +26,9 @@
 #define PIN_LCD_RST      5
 #define PIN_LCD_BL      38
 
-// ── I²C QWIIC ────────────────────────────────────────────────
-#define PIN_I2C_SDA     18
-#define PIN_I2C_SCL     17
+// ── I²C  QWIIC / STEMMA QT / EasyC ──────────────────────────
+#define PIN_I2C_SDA     43
+#define PIN_I2C_SCL     44
 
 // ── Batterie ADC ─────────────────────────────────────────────
 #define PIN_BAT_ADC      4    // Spannungsteiler ÷2 on-board
